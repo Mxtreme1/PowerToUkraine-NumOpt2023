@@ -8,7 +8,7 @@ class LineType:
     Args:
 
         name (str):
-            The type name.
+            The type name written like this ThisIsAName. No spaces or non-alphanumeric characters allowed.
 
         rating (int, float):
             The rating in kW (?)
@@ -34,6 +34,7 @@ class LineType:
     def name(self, value):
         assert isinstance(value, str)
         assert len(value) > 0
+        assert value.isalnum()
 
         self._name = value
 
@@ -43,10 +44,14 @@ class LineType:
 
     @rating.setter
     def rating(self, value):
-        assert isinstance(value, (int, float))
-        assert value >= 0
+        if self._rating is None and value is None:      # Seems stupid but allows basic testing before implementation.
+            pass
+        else:
 
-        if value is not None:
-            raise PermissionError("Check if valid rating. (In correct range, etc.)")
+            assert isinstance(value, (int, float))
+            assert value >= 0
+
+            if value is not None:
+                raise PermissionError("Check if valid rating. (In correct range, etc.)")
 
         self._rating = value

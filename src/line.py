@@ -51,8 +51,10 @@ class Line:
 
     @bus0.setter
     def bus0(self, value):
+        if self._bus0 is not None:
+            raise PermissionError("Network topology is fixed. Change it in the network definition.")
         assert isinstance(value, src.bus.Bus)
-        assert self.bus0 != self.bus1
+        assert self.bus1 != value
 
         self._bus0 = value
 
@@ -62,8 +64,11 @@ class Line:
 
     @bus1.setter
     def bus1(self, value):
+        if self._bus1 is not None:
+            raise PermissionError("Network topology is fixed. Change it in the network definition.")
+
         assert isinstance(value, src.bus.Bus)
-        assert self.bus0 != self.bus1
+        assert self.bus0 != value
 
         self._bus1 = value
 

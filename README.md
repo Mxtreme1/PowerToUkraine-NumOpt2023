@@ -5,9 +5,8 @@ Restructuring the power grid of Ukraine to make it more defensible and prepare i
 
 TODO:
 - W/h output per m^2 of solar panel in panel.py.
-- line
-- line_type
-- path
+- Add nonsense input tests.
+- Tests for path, grid
 - snapshot
 - grid
 - creation of optimisation task.
