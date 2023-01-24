@@ -21,6 +21,10 @@ class Panel:
     id_counter = itertools.count()
 
     def __init__(self, bus, size):
+        assert isinstance(bus, src.bus.Bus)
+        assert isinstance(size, (int, float))
+
+
         self._id = next(Panel.id_counter)
         self._bus = None
         self._size = 0
@@ -28,30 +32,46 @@ class Panel:
         self.bus = bus
         self.size = size
 
-    def get_id(self):
+    @property
+    def id(self):
         return self._id
 
+    @id.setter
     def set_id(self, identifier):
         raise PermissionError("id can  never be overwritten.")
 
-    def get_bus(self):
+    @property
+    def bus(self):
         return self._bus
 
-    def set_bus(self, bus):
-        assert isinstance(bus, src.bus.Bus)
+    @bus.setter
+    def bus(self, value):
+        assert isinstance(value, src.bus.Bus)
 
-        self._bus = bus
+        self._bus = value
 
-    def get_size(self):
+    @property
+    def size(self):
         return self._size
 
-    def set_size(self, size):
-        assert isinstance(size, (int, float))
-        assert size >= 0
-        assert size <= self.bus.roof_size  # The solar panels built on a roof can not exceed the space on it.
+    @size.setter
+    def size(self, value):
+        assert isinstance(value, (int, float))
+        assert value >= 0
+        assert value <= self.bus.roof_size  # The solar panels built on a roof can not exceed the space on it.
 
-        self._size = size
+        self._size = value
+    
+    def change_panel_size(self, factor):
+        """
+        Adds or removes square meters of solar panel, depending on signum of factor. [New_Size] = [Old_Size] + factor
+        
+        Args:
+            factor (int, float):
+                Change of panel size, positive or negative.
+            
+        Returns:
 
-    id = property(get_id, set_id)
-    bus = property(get_bus, set_bus)
-    size = property(get_size, set_size)
+        """
+        assert isinstance(factor, (int, float))
+        self.size = self.size + factor     # All tests are in setter

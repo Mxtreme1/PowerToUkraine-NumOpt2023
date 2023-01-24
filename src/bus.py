@@ -13,7 +13,7 @@ class Bus:
         roof_size (int, float):
             square meters of roof size. Greater or equal to zero.
 
-        power draw (Snapshots):
+        power draw (pandas.DataFrame):
             Points in time with the power draw at that time for the bus.
 
         panel_size (int, float):
@@ -32,42 +32,45 @@ class Bus:
         self.power_draw = power_draw
         self.panel = Panel(self, panel_size)     # creates Panel instance and sets it as panel of the bus.
 
-    def get_id(self):
+    @property
+    def id(self):
         return self._id
 
-    def set_id(self, identifier):
+    @id.setter
+    def id(self, identifier):
         raise PermissionError("Setting of id is not allowed.")
 
-    def get_roof_size(self):
+    @property
+    def roof_size(self):
 
         return self._roof_size
 
-    def set_roof_size(self, roof_size):
-        assert isinstance(roof_size, (int, float))
-        assert roof_size >= 0
+    @roof_size.setter
+    def roof_size(self, value):
+        assert isinstance(value, (int, float))
+        assert value >= 0
 
-        self._roof_size = roof_size
+        self._roof_size = value
 
-    def get_power_draw(self):
+    @property
+    def power_draw(self):
         return self._power_draw
-    
-    def set_power_draw(self, power_draw):
-        assert isinstance(power_draw, (type(None), pandas.DataFrame))
 
-        if power_draw is not None:
+    @power_draw.setter
+    def power_draw(self, value):
+        assert isinstance(value, (type(None), pandas.DataFrame))
+
+        if value is not None:
             raise NotImplemented("Check if power draw is valid")
 
-        self._power_draw = power_draw
+        self._power_draw = value
 
-    def get_panel(self):
+    @property
+    def panel(self):
         return self._panel
 
-    def set_panel(self, panel):
-        assert isinstance(panel, Panel)
+    @panel.setter
+    def panel(self, value):
+        assert isinstance(value, Panel)
 
-        self._panel = panel
-
-    id = property(get_id, set_id)
-    panel = property(get_panel, set_panel)
-    roof_size = property(get_roof_size, set_roof_size)
-    power_draw = property(get_power_draw, set_power_draw)
+        self._panel = value
