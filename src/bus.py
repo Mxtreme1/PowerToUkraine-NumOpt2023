@@ -24,7 +24,9 @@ class Bus:
     id_counter = itertools.count()
 
     def __init__(self, roof_size, power_draw, panel_size=0):
+
         self._id = next(Bus.id_counter)  # Unique identifier
+
         self._roof_size = None
         self._power_draw = None
         self._panel = None
@@ -72,6 +74,9 @@ class Bus:
 
     @panel.setter
     def panel(self, value):
+        if self._panel is not None:
+            raise PermissionError("A panel is fixed on a bus. Each bus has a unique panel. Get off my roof!")
+
         assert isinstance(value, Panel)
 
         self._panel = value

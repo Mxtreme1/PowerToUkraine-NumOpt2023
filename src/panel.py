@@ -24,25 +24,22 @@ class Panel:
 
     id_counter = itertools.count()
 
-    def __init__(self, bus, size, efficiency):
-        assert isinstance(bus, src.bus.Bus)
-        assert isinstance(size, (int, float))
+    def __init__(self, bus, size):
 
         self._id = next(Panel.id_counter)
+
         self._bus = None
         self._size = None
-        self._efficiency = None
 
         self.bus = bus
         self.size = size
-        self.efficiency = efficiency
 
     @property
     def id(self):
         return self._id
 
     @id.setter
-    def set_id(self, identifier):
+    def id(self, identifier):
         raise PermissionError("id can  never be overwritten.")
 
     @property
@@ -51,6 +48,9 @@ class Panel:
 
     @bus.setter
     def bus(self, value):
+        if self._bus is not None:
+            raise PermissionError("A panel is fixed on a bus. Each bus has a unique panel. Get off my roof!")
+
         assert isinstance(value, src.bus.Bus)
 
         self._bus = value
@@ -67,19 +67,6 @@ class Panel:
 
         self._size = value
 
-    @property
-    def efficiency(self):
-        return self._efficiency
-
-    @efficiency.setter
-    def efficiency(self, value):
-        assert isinstance(value, pandas.DataFrame)
-
-        if value is not None:
-            raise NotImplementedError("Snapshots need to correspond with bus snapshots, implement this.")
-
-        self._efficiency = value
-    
     def change_panel_size(self, factor):
         """
         Adds or removes square meters of solar panel, depending on signum of factor. [New_Size] = [Old_Size] + factor

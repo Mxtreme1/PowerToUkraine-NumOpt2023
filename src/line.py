@@ -24,8 +24,6 @@ class Line:
     id_counter = itertools.count()
 
     def __init__(self, bus0, bus1, length, line_type):
-        assert bus0 != bus1
-        assert length >= 0
 
         self._id = next(Line.id_counter)
 
@@ -54,6 +52,7 @@ class Line:
     @bus0.setter
     def bus0(self, value):
         assert isinstance(value, src.bus.Bus)
+        assert self.bus0 != self.bus1
 
         self._bus0 = value
 
@@ -64,6 +63,7 @@ class Line:
     @bus1.setter
     def bus1(self, value):
         assert isinstance(value, src.bus.Bus)
+        assert self.bus0 != self.bus1
 
         self._bus1 = value
 
@@ -74,6 +74,7 @@ class Line:
     @length.setter
     def length(self, value):
         assert isinstance(value, (int, float))
+        assert value >= 0
 
         self._length = value
 
