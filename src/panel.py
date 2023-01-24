@@ -16,21 +16,26 @@ class Panel:
         size (int, float):
             The size of the solar panel in square meters. Has to be smaller or equal to roof size (Bus.size).
 
+        efficiency (pandas.DataFrame):
+            Efficiency of the solar panel given time frames (aka snapshots).
+            Need to be same snapshots as for power draw in Bus class.
+
     """
 
     id_counter = itertools.count()
 
-    def __init__(self, bus, size):
+    def __init__(self, bus, size, efficiency):
         assert isinstance(bus, src.bus.Bus)
         assert isinstance(size, (int, float))
 
-
         self._id = next(Panel.id_counter)
         self._bus = None
-        self._size = 0
+        self._size = None
+        self._efficiency = None
 
         self.bus = bus
         self.size = size
+        self.efficiency = efficiency
 
     @property
     def id(self):
@@ -61,6 +66,19 @@ class Panel:
         assert value <= self.bus.roof_size  # The solar panels built on a roof can not exceed the space on it.
 
         self._size = value
+
+    @property
+    def efficiency(self):
+        return self._efficiency
+
+    @efficiency.setter
+    def efficiency(self, value):
+        assert isinstance(value, pandas.DataFrame)
+
+        if value is not None:
+            raise NotImplementedError("Snapshots need to correspond with bus snapshots, implement this.")
+
+        self._efficiency = value
     
     def change_panel_size(self, factor):
         """

@@ -15,6 +15,7 @@ class Bus:
 
         power draw (pandas.DataFrame):
             Points in time with the power draw at that time for the bus.
+            Need to be same time frames aka snapshots as in Line efficiency DataFrame.
 
         panel_size (int, float):
             The size of the solar panel on a roof, can be zero. Also defaults to 0.
@@ -24,7 +25,7 @@ class Bus:
 
     def __init__(self, roof_size, power_draw, panel_size=0):
         self._id = next(Bus.id_counter)  # Unique identifier
-        self._roof_size = 0
+        self._roof_size = None
         self._power_draw = None
         self._panel = None
 

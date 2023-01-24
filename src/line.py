@@ -21,9 +21,13 @@ class Line:
             Type of the line. Determines the rating of the line aka how much current can be carried.
     """
 
+    id_counter = itertools.count()
+
     def __init__(self, bus0, bus1, length, line_type):
         assert bus0 != bus1
         assert length >= 0
+
+        self._id = next(Line.id_counter)
 
         self._bus0 = None
         self._bus1 = None
@@ -34,6 +38,14 @@ class Line:
         self.bus1 = bus1
         self.length = length
         self.line_type = line_type
+
+    @property
+    def id(self):
+        return self._id
+
+    @id.setter
+    def id(self, value):
+        raise PermissionError("No changes in ID of Line possible.")
 
     @property
     def bus0(self):
@@ -74,4 +86,3 @@ class Line:
         assert isinstance(value, src.line_type.LineType)
 
         self._line_type = value
-
