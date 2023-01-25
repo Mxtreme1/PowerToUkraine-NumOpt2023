@@ -18,7 +18,7 @@ def test_panel_change_id():
     panel = bus.panel
 
     with pytest.raises(PermissionError):
-        panel.id = 3
+        panel.id = 100
 
 
 def test_panel_change_size():

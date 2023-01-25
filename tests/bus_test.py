@@ -24,7 +24,7 @@ def test_bus_change_roof_size():
 def test_bus_change_id():
     bus = Bus(70.0, None, 1)
     with pytest.raises(PermissionError):
-        bus.id = 1
+        bus.id = 100
 
 
 def test_bus_change_panel():

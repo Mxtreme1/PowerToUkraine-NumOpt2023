@@ -22,7 +22,9 @@ class Path:
         self._id = next(Path.id_counter)
 
         self._lines = None
+        self._line_amount = None
         self._buses = None      # Will be a list of buses later.
+        self._bus_amount = None
 
         self.lines = lines
 
@@ -62,7 +64,13 @@ class Path:
         buses_on_lines.append(value[-1].bus1)
 
         self.buses = buses_on_lines
+        self._bus_amount = len(buses_on_lines)
         self._lines = value
+        self._line_amount = len(value)
+
+    @property
+    def line_amount(self):
+        return self._line_amount
 
     @property
     def buses(self):
@@ -85,6 +93,10 @@ class Path:
             unique_buses.append(item)
 
         self._buses = value
+
+    @property
+    def bus_amount(self):
+        return self._bus_amount
 
     @property
     def length(self):

@@ -21,6 +21,8 @@ def test_change_name():
     assert type_a.name == "CoolType"
     assert type_a.rating is None
 
+    type_a.id = 100
+
     type_a.name = "OtherCoolType"
 
     assert type_a.name == "OtherCoolType"

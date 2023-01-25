@@ -49,9 +49,23 @@ class Grid:
     
     @buses.setter
     def buses(self, value):
+        if self._buses is not None:
+            raise PermissionError("No changing of buses after Grid creation, add them all at once to prevent errors.")
+
         assert isinstance(value, list)
         for item in value:
             assert isinstance(item, src.bus.Bus)
+
+        # Checks for duplicates in the buses
+        unique_buses = []
+        for item in value:
+            assert item not in unique_buses
+            unique_buses.append(item)
+
+        self._buses = value
+
+
+
             
         
     
@@ -87,8 +101,6 @@ class Grid:
     @snapshots.setter
     def snapshots(self, value):
         pass
-
-
 
 
     def add_bus(self):
