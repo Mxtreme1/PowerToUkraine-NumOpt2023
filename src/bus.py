@@ -1,4 +1,3 @@
-import src.bus
 from src.panel import Panel
 
 import itertools
@@ -89,7 +88,7 @@ class Bus:
 
     @connected_buses.setter
     def connected_buses(self, value):   # Only adds a new bus.
-        assert isinstance(value, src.bus.Bus)
+        assert isinstance(value, Bus)
 
         # It is okay if it already connected, there might be two lines connecting the buses.
         if value not in self.connected_buses:

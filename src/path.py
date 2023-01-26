@@ -1,5 +1,3 @@
-import pandas as pd
-
 import src.bus
 import src.line
 

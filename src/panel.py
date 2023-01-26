@@ -1,5 +1,4 @@
 import itertools
-import pandas
 
 import src.bus
 
@@ -15,10 +14,6 @@ class Panel:
 
         size (int, float):
             The size of the solar panel in square meters. Has to be smaller or equal to roof size (Bus.size).
-
-        efficiency (pandas.DataFrame):
-            Efficiency of the solar panel given time frames (aka snapshots).
-            Need to be same snapshots as for power draw in Bus class.
 
     """
 

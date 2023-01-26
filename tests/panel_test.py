@@ -1,4 +1,3 @@
-from src.panel import Panel
 from src.bus import Bus
 
 import pytest
@@ -47,4 +46,3 @@ def test_panel_change_bus():
 
     with pytest.raises(PermissionError):
         panel0.bus = bus1
-

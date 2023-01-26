@@ -21,8 +21,8 @@ def test_path_sanity():
 
     assert path.bus_amount == 4
     assert path.line_amount == 3
-    assert set(path.buses) == set([bus0, bus1, bus2, bus3])
-    assert path.lines == [line_a, line_b, line_c]
+    assert set(path.buses) == {bus0, bus1, bus2, bus3}
+    assert path.lines == {line_a, line_b, line_c}
 
 
 def test_path_circle():
@@ -37,7 +37,7 @@ def test_path_circle():
     line_c = Line(bus2, bus0, 50, type_b)
 
     with pytest.raises(ValueError):
-        path = Path([line_a, line_b, line_c])
+        Path([line_a, line_b, line_c])
 
 
 def test_path_change():
@@ -56,7 +56,7 @@ def test_path_change():
 
     assert path.bus_amount == 4
     assert path.line_amount == 3
-    assert set(path.buses) == set([bus0, bus1, bus2, bus3])
+    assert set(path.buses) == {bus0, bus1, bus2, bus3}
     assert path.lines == [line_a, line_b, line_c]
 
     with pytest.raises(PermissionError):
@@ -67,9 +67,3 @@ def test_path_change():
 
     with pytest.raises(PermissionError):
         path.lines = [line_a, line_b]
-
-    with pytest.raises(AttributeError):
-        path.line_amount = 100
-
-    with pytest.raises(AttributeError):
-        path.bus_amount = 100

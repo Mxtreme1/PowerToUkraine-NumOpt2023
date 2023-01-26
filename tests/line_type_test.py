@@ -12,7 +12,7 @@ def test_line_type_sanity():
 
 def test_stupid_type_name():
     with pytest.raises(AssertionError):
-        type_b = LineType("Stupid Type", None)
+        LineType("Stupid Type", None)
 
 
 def test_change_name():
