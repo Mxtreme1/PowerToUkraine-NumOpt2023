@@ -6,7 +6,7 @@ from src.line_type import LineType
 from src.grid import Grid
 
 
-def sanity_check_grid():
+def test_sanity_grid():
 
     bus0 = Bus(100, None, 10)
     bus1 = Bus(200, None, 20)
@@ -19,7 +19,7 @@ def sanity_check_grid():
     line_a = Line(bus0, bus1, 30, type_a)
     line_b = Line(bus1, bus2, 40, type_b)
     line_c = Line(bus2, bus3, 50, type_b)
-    line_A = Line(bus0, bus4, 60, type_a)
-    line_B = Line(bus4, bus5, 70, type_b)
+    line_1 = Line(bus0, bus4, 60, type_a)
+    line_2 = Line(bus4, bus5, 70, type_b)
 
-    grid = Grid([bus0, bus1, bus2, bus3, bus4, bus5], [line_a, line_b, line_c, line_A, line_B])
+    grid = Grid([bus0, bus1, bus2, bus3, bus4, bus5], [line_a, line_b, line_c, line_1, line_2])

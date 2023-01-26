@@ -1,3 +1,5 @@
+import pandas as pd
+
 import src.bus
 import src.line
 
@@ -51,22 +53,64 @@ class Path:
 
         # The next two code blocks (checking connection and the buses on a path) are separated for readability.
         # Checks that the lines are actually connected via a bus.
-        last_bus = value[0].bus1
+        last_buses = [value[0].bus0, value[0].bus1]
         for item in value[1:]:
-            assert item.bus0 == last_bus
-            last_bus = item.bus1
+            assert item.bus0 in last_buses or item.bus1 in last_buses
+            last_buses = [item.bus0, item.bus1]
 
-        # List all buses on the path
+        # List all buses on the path including duplicates
         buses_on_lines = []
-
         for item in value:
             buses_on_lines.append(item.bus0)
-        buses_on_lines.append(value[-1].bus1)
+            buses_on_lines.append(item.bus1)
+
+        if len(buses_on_lines) > 2:
+            buses_on_lines = Path._check_for_circles(buses_on_lines)
 
         self.buses = buses_on_lines
+
         self._bus_amount = len(buses_on_lines)
         self._lines = value
         self._line_amount = len(value)
+
+    @staticmethod
+    def _check_for_circles(buses_on_lines):
+        """
+        Tests if the buses that are on the lines of a path contain one or multiple circles.
+        Raises error if not the case, otherwise returns the unique buses on the path.
+        
+        Args:
+            buses_on_lines (list of Bus instances)
+            
+        Returns:
+            list of Bus instances:
+                Unique buses on the path.
+        """
+        assert isinstance(buses_on_lines, list)
+        for item in buses_on_lines:
+            assert isinstance(item, src.bus.Bus)
+
+        # Keep removing a bus and then its duplicate from the other line, if there are no loops
+        # we will only remove each bus pair once and end up with two different buses, start and end of path.
+        buses_set = set()
+        non_duplicate_counter = 0
+        while len(buses_on_lines) > 2 >= non_duplicate_counter:
+            bus = buses_on_lines.pop()
+            if bus in buses_set:
+                raise ValueError("Circle detected in lines setter of Path class.")
+
+            # If we found the start/end bus just add them to the front of the list again
+            if bus not in buses_on_lines:
+                buses_on_lines = [bus] + buses_on_lines
+                non_duplicate_counter += 1
+            else:
+                buses_on_lines.remove(bus)  # Removes duplicate of bus (only one if multiple in list)
+                buses_set.update([bus])
+
+        if len(buses_on_lines) != 2 or buses_on_lines[0] == buses_on_lines[1]:
+            raise ValueError("Something is wrong with the buses on your path. Check by hand.")
+
+        return buses_on_lines + list(buses_set)
 
     @property
     def line_amount(self):

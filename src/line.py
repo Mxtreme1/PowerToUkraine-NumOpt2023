@@ -70,6 +70,11 @@ class Line:
         assert isinstance(value, src.bus.Bus)
         assert self.bus0 != value
 
+        # bus1 is always set second therefore we can already access self.bus0, not true the other way around.
+        # That is why we add the buses to the others connected buses here and not in bus0 setter.
+        self.bus0.connected_buses = value
+        value.connected_buses = self.bus0
+
         self._bus1 = value
 
     @property

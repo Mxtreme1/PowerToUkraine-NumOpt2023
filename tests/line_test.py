@@ -52,6 +52,26 @@ def test_line_same_buses():
         line = Line(bus, bus, 30, type_a)
 
 
+def test_connected_buses():
+    bus0 = Bus(100, None, 10)
+    bus1 = Bus(200, None, 20)
+    bus2 = Bus(300, None, 30)
+    bus3 = Bus(400, None, 40)
+    type_a = LineType("Cool", None)
+    type_b = LineType("Uncool", None)
+    line_a = Line(bus0, bus1, 30, type_a)
+    line_b = Line(bus0, bus1, 40, type_b)
+    line_c = Line(bus1, bus2, 50, type_b)
+    line_d = Line(bus2, bus3, 60, type_a)
+    line_e = Line(bus0, bus3, 70, type_a)
+
+    # A list is ordered, this should be thought of in different places, but here it is okay, as we only test.
+    assert bus0.connected_buses == [bus1, bus3]
+    assert bus1.connected_buses == [bus0, bus2]
+    assert bus2.connected_buses == [bus1, bus3]
+    assert bus3.connected_buses == [bus2, bus0]
+
+
 def test_line_change_bus0():
 
     bus0 = Bus(100, None, 10)

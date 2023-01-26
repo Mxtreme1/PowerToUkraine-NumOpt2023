@@ -1,3 +1,4 @@
+import src.bus
 from src.panel import Panel
 
 import itertools
@@ -30,6 +31,7 @@ class Bus:
         self._roof_size = None
         self._power_draw = None
         self._panel = None
+        self._connected_buses = []
 
         self.roof_size = roof_size
         self.power_draw = power_draw
@@ -80,3 +82,16 @@ class Bus:
         assert isinstance(value, Panel)
 
         self._panel = value
+
+    @property
+    def connected_buses(self):
+        return self._connected_buses
+
+    @connected_buses.setter
+    def connected_buses(self, value):   # Only adds a new bus.
+        assert isinstance(value, src.bus.Bus)
+
+        # It is okay if it already connected, there might be two lines connecting the buses.
+        if value not in self.connected_buses:
+            self._connected_buses.append(value)
+        
