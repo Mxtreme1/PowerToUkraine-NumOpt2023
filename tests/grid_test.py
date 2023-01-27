@@ -24,9 +24,9 @@ def test_sanity_grid():
     assert set(grid.lines) == {line_a, line_b, line_c, line_1, line_2}
 
 def test_rating_matrix():
-    R = grid.create_line_rating_matrix()
-    L = grid.create_length_matrix()
-    a = grid.create_area_vector()
+    grid.create_line_rating_matrix()
+    grid.create_length_matrix()
+    grid.create_area_vector()
 
 def test_bus_left_out():
     grid2 = Grid([bus0, bus1, bus2, bus4, bus5], [line_a, line_b, line_1, line_2])
