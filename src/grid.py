@@ -39,8 +39,6 @@ class Grid:
         self.lines = lines
         self.snapshots = snapshots
 
-        self._calculate_paths()
-
     @property
     def id(self):
         return self._id
@@ -138,47 +136,3 @@ class Grid:
 
         """
         pass
-    
-    def _create_networkx_graph(self):
-        """
-        Creates a networkx graph object using the buses and lines.
-        """
-
-        graph = nx.MultiGraph()
-        graph.add_nodes_from([bus for bus in self.buses])
-
-        for line in self.lines:
-            graph.add_edge(line.bus0, line.bus1, key=line)
-
-        return graph
-
-    def _calculate_paths(self):
-        """
-        Calculate all possible paths. Paths are directed in our model.
-
-        """
-
-        graph = self._create_networkx_graph()
-
-        # Find all paths starting at each node (finds the paths as )
-        paths = {}
-        for start_node in self.buses:
-            paths[start_node] = []
-            for end_node in self.buses:
-                start_to_end_paths = nx.all_simple_edge_paths(graph, start_node, end_node)
-                start_to_end_paths = list(start_to_end_paths)
-                if start_to_end_paths is not []:
-                    paths[start_node] += start_to_end_paths
-
-        # Convert to path objects
-        all_path_instances = []
-        for bus in self.buses:
-            bus_paths = paths[bus]
-            for bus_path in bus_paths:
-                lines_on_bus_path = []
-                for connection in bus_path:
-                    lines_on_bus_path.append(connection[2])
-                path = Path(lines_on_bus_path)
-                all_path_instances.append(path)
-
-        self.paths = all_path_instances

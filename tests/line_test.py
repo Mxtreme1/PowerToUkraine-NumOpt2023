@@ -57,6 +57,13 @@ def test_connected_buses():
     bus1 = Bus(200, None, 20)
     bus2 = Bus(300, None, 30)
     bus3 = Bus(400, None, 40)
+    type_a = LineType("Cool", None)
+    type_b = LineType("Uncool", None)
+    Line(bus0, bus1, 30, type_a)
+    Line(bus0, bus1, 40, type_b)
+    Line(bus1, bus2, 50, type_b)
+    Line(bus2, bus3, 60, type_a)
+    Line(bus0, bus3, 70, type_a)
 
     # A list is ordered, this should be thought of in different places, but here it is okay, as we only test.
     assert bus0.connected_buses == [bus1, bus3]

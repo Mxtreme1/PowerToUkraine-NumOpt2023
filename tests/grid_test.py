@@ -25,4 +25,4 @@ def test_sanity_grid():
     grid = Grid([bus0, bus1, bus2, bus3, bus4, bus5], [line_a, line_b, line_c, line_1, line_2])
 
     assert set(grid.buses) == {bus0, bus1, bus2, bus3, bus4, bus5}
-    assert grid.lines == [line_a, line_b, line_c, line_1, line_2]
+    assert set(grid.lines) == {line_a, line_b, line_c, line_1, line_2}
