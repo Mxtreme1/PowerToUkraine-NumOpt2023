@@ -7,7 +7,6 @@ def test_panel_sanity():
     bus = Bus(70, None, 1)
     panel = bus.panel
 
-    # assert panel.id == 0
     assert panel.bus == bus
     assert panel.size == 1
 
@@ -32,7 +31,6 @@ def test_panel_change_size():
 
     panel.size = 20
 
-    # assert panel.id == 0
     assert panel.bus == bus
     assert panel.size == 20
     assert panel.size == 20.0

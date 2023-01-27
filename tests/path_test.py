@@ -22,7 +22,6 @@ def test_path_sanity():
     assert path.bus_amount == 4
     assert path.line_amount == 3
     assert set(path.buses) == {bus0, bus1, bus2, bus3}
-    # assert path.lines == {line_a, line_b, line_c}
 
 
 def test_path_circle():

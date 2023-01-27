@@ -65,7 +65,7 @@ class Bus:
         assert isinstance(value, (type(None), pandas.DataFrame))
 
         if value is not None:
-            raise NotImplemented("Check if power draw is valid")
+            raise NotImplementedError("Check power draw validity not implemented")
 
         self._power_draw = value
 

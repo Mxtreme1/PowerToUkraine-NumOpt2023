@@ -51,7 +51,8 @@ class LineType:
             assert isinstance(value, (int, float))
             assert value >= 0
 
-            if value is not None:
-                raise PermissionError("Check if valid rating. (In correct range, etc.)")
+            # TODO: check validity
+
+            self._rating = value
 
         self._rating = value

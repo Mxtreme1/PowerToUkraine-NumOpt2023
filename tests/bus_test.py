@@ -1,4 +1,4 @@
-from src.bus import *
+from src.bus import Bus
 
 import pytest
 
@@ -8,7 +8,6 @@ def test_bus_sanity():
     assert bus.roof_size == 70
     assert bus.power_draw is None
     assert bus.panel.size == 1
-    # assert bus.id == 0
 
 
 def test_bus_change_roof_size():
@@ -18,7 +17,6 @@ def test_bus_change_roof_size():
     assert bus.roof_size == 50
     assert bus.power_draw is None
     assert bus.panel.size == 1
-    # assert bus.id == 1
 
 
 def test_bus_change_id():

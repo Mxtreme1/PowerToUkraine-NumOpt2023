@@ -25,6 +25,8 @@ class Panel:
 
         self._bus = None
         self._size = None
+        # TODO: Real number here, 5000 is from ChatGPT
+        self._output_per_sqm = 5000
 
         self.bus = bus
         self.size = size
@@ -61,6 +63,10 @@ class Panel:
         assert value <= self.bus.roof_size  # The solar panels built on a roof can not exceed the space on it.
 
         self._size = value
+
+    @property
+    def output_per_sqm(self):
+        return self._output_per_sqm
 
     def change_panel_size(self, factor):
         """

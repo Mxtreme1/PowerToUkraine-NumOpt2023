@@ -1,4 +1,4 @@
-from src.bus import *
+from src.bus import Bus
 
 
 if __name__ == '__main__':
