@@ -4,8 +4,6 @@ import numpy as np
 
 import src.bus
 import src.line
-import src.path
-
 
 class Grid:
     """
@@ -98,25 +96,6 @@ class Grid:
         raise NotImplementedError("Set for each bus individually for now.")
     
     @property
-    def paths(self):
-        return self._paths
-    
-    @paths.setter
-    def paths(self, value):
-        if self._paths is not None:
-            raise PermissionError("Paths are calculated automatically when buses and lines are added.")
-
-        assert isinstance(value, list)
-
-        unique_paths = []
-        for path in value:
-            assert isinstance(path, src.path.Path)
-            assert path not in unique_paths
-            unique_paths.append(path)
-
-        self._paths = value
-
-    @property
     def snapshots(self):
         return self._snapshots
     
@@ -153,7 +132,7 @@ class Grid:
 
         for bus in self.buses:
             i = bus.id
-            R.loc[i, i] = bus.panel.size * bus.panel.output_per_sqm
+            R.loc[i, i] = bus.roof_size * bus.panel.output_per_sqm
 
         return R
 
@@ -202,6 +181,35 @@ class Grid:
             a.loc[bus.id] = bus.roof_size
 
         return a
+
+    def calculate_total_panel_size(self):
+        """
+        Sum over all roof sizes.
+
+        Returns:
+            (int, float):
+                Sum over all roof sizes.
+
+        """
+
+        total_size = 0
+
+        for bus in self.buses:
+            total_size += bus.roof_size
+
+        return total_size
+
+    def get_panel_output_per_sqm(self):
+        """
+        Output of any solar panel per square meter.
+
+        Returns:
+            (int, float):
+                Output of any solar panel per square meter.
+
+        """
+
+        return self.buses[0].panel.output_per_sqm       # All panels currently have the same output per sqm.
 
 
     def create_build_out(self):

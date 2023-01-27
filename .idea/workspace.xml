@@ -6,7 +6,11 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="164728d2-d1eb-4107-8b7e-74fafc510182" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/tests/optimisation_taks_test.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/grid.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/grid.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/optimisation_task.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/optimisation_task.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/grid_test.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/grid_test.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -70,5 +74,32 @@
       <updated>1674740074099</updated>
     </task>
     <servers />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/tests/optimisation_taks_test.py</url>
+          <line>31</line>
+          <option name="timeStamp" value="20" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/src/optimisation_task.py</url>
+          <line>103</line>
+          <option name="timeStamp" value="21" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
   </component>
 </project>

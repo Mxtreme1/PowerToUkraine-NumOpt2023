@@ -1,5 +1,5 @@
-import pandas
 import pandas as pd
+import numpy as np
 import pulp as pl
 
 
@@ -42,7 +42,7 @@ class OptimisationTask:
 
     @L.setter
     def L(self, value):
-        assert isinstance(value, pandas.DataFrame)
+        assert isinstance(value, pd.DataFrame)
         for row in value.index.values:
             for column in value.columns.values:
                 assert isinstance(value.loc[row, column], (int, float))
@@ -57,10 +57,10 @@ class OptimisationTask:
 
     @R.setter
     def R(self, value):
-        assert isinstance(value, pandas.DataFrame)
+        assert isinstance(value, pd.DataFrame)
         for row in value.index.values:
             for column in value.columns.values:
-                assert isinstance(value.loc[row, column], (int, float))
+                assert isinstance(value.loc[row, column], (np.int64, np.float64))
                 assert value.loc[row, column] == value.loc[column, row]     # Tests symmetry
 
         self._R = value
@@ -71,7 +71,7 @@ class OptimisationTask:
 
     @a.setter
     def a(self, value):
-        assert isinstance(value, pandas.Series)
+        assert isinstance(value, pd.Series)
         for bus in value.index.values:
             assert isinstance(bus, (int, float))
 
@@ -95,3 +95,10 @@ class OptimisationTask:
         assert isinstance(value, (int, float))
 
         self._panel_output_per_sqm = value
+
+    def create_variables(self):
+        """
+        Creates the pulp variables P_ij for the lines.
+        """
+
+        pass
