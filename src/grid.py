@@ -1,11 +1,10 @@
 import itertools
-import networkx as nx
+import pandas as pd
+import numpy as np
 
 import src.bus
 import src.line
 import src.path
-
-from src.path import Path
 
 
 class Grid:
@@ -124,6 +123,86 @@ class Grid:
     @snapshots.setter
     def snapshots(self, value):
         pass
+
+    # TODO: Next two methods can be simplified.
+    def create_line_rating_matrix(self):
+        """
+        Creates the matrix R where R_i,j is the rating of the line going from Bus_i to Bus_j if i != j.
+        If i == j then it is the maximum possible electricity created on the panel of Bus_i:
+        Bus_i.panel.size * output/m^2
+
+        Returns:
+            pandas.DataFrame:
+                The matrix R with row and column names being the id's of the corresponding buses.
+
+        """
+
+        R = pd.DataFrame(index=[bus.id for bus in self.buses], columns=[bus.id for bus in self.buses])
+        R = R.fillna(0)
+
+        for line in self.lines:
+            bus0 = line.bus0.id
+            bus1 = line.bus1.id
+            rating = line.line_type.rating
+            
+            assert isinstance(rating, (int, float))
+            
+            
+            R.loc[bus0, bus1] = rating
+            R.loc[bus1, bus0] = rating
+
+        for bus in self.buses:
+            i = bus.id
+            R.loc[i, i] = bus.panel.size * bus.panel.output_per_sqm
+
+        return R
+
+    def create_length_matrix(self):
+        """
+        Creates a matrix with the length of the line going from Bus_i to Bus_j in its entry ij. It is symmetrical.
+        If there is no line between them, the value is infinity, if the line is going from the bus to itself it is 0.
+        
+        Returns:
+            pandas.DataFrame:
+                The matrix L, where its rows and column names are the id's of buses.
+
+        """
+
+        L = pd.DataFrame(index=[bus.id for bus in self.buses], columns=[bus.id for bus in self.buses])
+        L = L.fillna(np.inf)
+
+        for line in self.lines:
+            bus0 = line.bus0.id
+            bus1 = line.bus1.id
+            length = line.length
+
+            assert isinstance(length, (int, float))
+
+            L.loc[bus0, bus1] = length
+            L.loc[bus1, bus0] = length
+
+        for bus in self.buses:
+            i = bus.id
+            L.loc[i, i] = 0
+
+        return L
+
+    def create_area_vector(self):
+        """
+        Creates a Vector A that has the roof area of Bus_i in its i-th entry.
+        
+        Returns:
+            pandas.Series:
+                Vector as described above, the entries are denoted by the id of the bus it describes.
+        """
+
+        a = pd.Series(index=[bus.id for bus in self.buses])
+
+        for bus in self.buses:
+            a.loc[bus.id] = bus.roof_size
+
+        return a
+
 
     def create_build_out(self):
         """
