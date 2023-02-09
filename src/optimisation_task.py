@@ -185,9 +185,6 @@ class OptimisationTask:
         roof_sizes = self.a
         snapshots = self.snapshots
         available_panel_size = self.total_panel_size
-        # TODO replace with power flow
-        # TODO: Remove
-        # TODO Remove
         N = roof_sizes.size - 1      # Ignore slack bus for solar panels on roof
 
         # TODO: Code this
@@ -195,97 +192,6 @@ class OptimisationTask:
         c_min = [10, 20]
 
         K = self.panel_output_per_sqm
-        # c_max = [100, 80]
-        # c_min = [10, 20]
-        # roof_sizes = [10, 130]
-
-        # # Length of House i to House j
-        # L = [[0, 5],
-        #      [5, 0]]
-        # A = [100, 70]
-        # c = [50, 100]
-        # Amax = 200  # maximum area of sonal panels we can distribute
-        # # maximal energy House i can make with all of the roof area having solar panels
-        # Pmax = []
-        # for i in range(N):
-        #     Pmax.append(A[i] * ph)
-        #
-        # R = [[Pmax[0], 100],
-        #      [100, Pmax[1]]]
-        #
-        #
-        #
-        #
-        # # create empty optimization problem
-        # self.task = ca.Opti()
-        #
-        # # define variable(nxn matrix)
-        # x = self.task.variable(N, N)
-        # self.x = x
-        #
-        # # maximal energy House i can make with all the roof area having solar panels
-        # p_max = []
-        # for i in range(N):
-        #     p_max.append(A.iloc[i] * ph)
-        #
-        # # define objective
-        # f = 0
-        # for i in range(N):
-        #     for j in range(N):
-        #         f += L.iloc[i, j] * x[i, j]
-        #
-        # # hand objective to casadi, no minimization done yet
-        # self.task.minimize(f)
-        #
-        # # define constraints. To include several constraints, just call this
-        # # function several times
-        #
-        # # the energy house i has available (after subtracting the losses to other houses)
-        #
-        # Pend = []
-        # for i in range(N):
-        #     Pend_m = 0
-        #     for j in range(N):
-        #         Pend_m += x[i, j] - x[j, i]
-        #     Pend.append(Pend_m + x[i, i])
-        #
-        # # energy consumption of house i per day in Kw/h,
-        # # note: House 5 is generator
-        # # 14 kw/h is average energy consumption of a >3-person household
-        #
-        # # constraint house i needs a minimum of c_i energy
-        # for i in range(N):
-        #     self.task.subject_to(c[i] <= Pend[i])
-        #
-        # # constraint house i can produce with maximal solar panels built
-        # # and constraint on how much one cable can transport
-        # # therefore we have a NxN matrix, where on the main diagonal,
-        # # we have what one house can maximally produce based in the area
-        # # of the house roof which is P_max=A*ph
-        #
-        # # roof area House i, average: 100m^2
-        #
-        # for i in range(N):
-        #     for j in range(N):
-        #         self.task.subject_to(x[i, j] <= R.iloc[i, j])
-        #
-        # # constraint that sum of energy production is limited by the total amount of solar panels we can build
-        # # were P_p stands for produced energy
-        #
-        # P = ph * Amax  # maximum power we can produce based on the amount of solar panels we have
-        # P_p = 0
-        # for i in range(N):
-        #     P_p += x[i, i]
-        #
-        # self.task.subject_to(P_p <= P)
-        #
-        # for i in range(N):
-        #     for j in range(N):
-        #         self.task.subject_to(x[i, j] >= 0)
-        #
-        # # define solver
-        # self.task.solver('ipopt')  # Use IPOPT as solver
-
         num_snaps = range(len(snapshots))  # easy for loops
 
         # create empty optimization problem
