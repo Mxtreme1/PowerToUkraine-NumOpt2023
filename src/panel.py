@@ -25,8 +25,8 @@ class Panel:
 
         self._bus = None
         self._size = None
-        # TODO: Real number here, 5000 is from ChatGPT
-        self._output_per_sqm = 5000
+        # TODO: Real number here, 5000 Watt per day is from ChatGPT
+        self._output_per_sqm = 5
 
         self.bus = bus
         self.size = size
