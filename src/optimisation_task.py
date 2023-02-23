@@ -3,6 +3,8 @@ import numpy as np
 import casadi as ca
 import math
 
+import src.bus
+
 
 class OptimisationTask:
     """
@@ -23,7 +25,7 @@ class OptimisationTask:
             Vector A that has the roof area of Bus_i in its i-th entry.
     """
 
-    def __init__(self, line_length, line_rating, a, total_panel_size, panel_output_per_sqm, snapshots):
+    def __init__(self, line_length, line_rating, a, total_panel_size, panel_output_per_sqm, snapshots, buses):
 
         self._L = None
         self._R = None
@@ -39,6 +41,7 @@ class OptimisationTask:
         # Write getters and setters
         self._xt = None
         self._a = None
+        self._buses = None
 
         self.line_length = line_length
         self.line_rating = line_rating
@@ -46,6 +49,7 @@ class OptimisationTask:
         self.total_panel_size = total_panel_size
         self.panel_output_per_sqm = panel_output_per_sqm
         self.snapshots = snapshots
+        self.buses = buses
 
     @property
     def line_length(self):
@@ -140,7 +144,7 @@ class OptimisationTask:
         if self.snapshots is not None:
             raise PermissionError("Snapshots can only be set once.")
         else:
-            assert isinstance(value, np.ndarray)
+            assert isinstance(value, (np.ndarray, list))
             self._snapshots = value
 
     @property
@@ -161,11 +165,22 @@ class OptimisationTask:
         else:
             return range(len(self.snapshots))  # easy for loops
 
-    # define function for energy consumption of every house, where c_max is the maximal energy house i consumes and
-    # cmin is the minimal energy it consumes(at night or at day)
+    @property
+    def buses(self):
+        return self._buses
+
+    @buses.setter
+    def buses(self, value):
+        assert isinstance(value, list)
+        for item in value:
+            assert isinstance(item, src.bus.Bus)
+
+        self._buses = value
 
     @staticmethod
     def create_energy_consumption(c_max_arg, c_min_arg, t_arg):
+        # define function for energy consumption of every house, where c_max is the maximal energy house i consumes and
+        # cmin is the minimal energy it consumes(at night or at day)
         if 16 > t_arg >= 0:
             c_func = c_max_arg * (math.sin(2 * math.pi * (1 / 16) * t_arg)) ** 2 + c_min_arg
         elif 16 <= t_arg <= 24:
@@ -175,19 +190,18 @@ class OptimisationTask:
 
         return c_func
 
-    # define function that returns array of energy consumption of each individual house given time t1
-    # where the input arguments are a fixed time and the lists of cmax and cmin
-
     @staticmethod
     def create_array_of_consumption(t1, argcmax, argcmin):
+        # define function that returns array of energy consumption of each individual house given time t1
+        # where the input arguments are a fixed time and the lists of cmax and cmin
         consumption_at_time_t1_all_houses = []
         for argc_max, argc_min_ in zip(argcmax, argcmin):
             consumption_at_time_t1_all_houses.append(OptimisationTask.create_energy_consumption(argc_max, argc_min_, t1))
         return consumption_at_time_t1_all_houses
 
-    # define function for amount of sunlight we get at given time t
     @staticmethod
     def sun(t_arg):
+        # define function for amount of sunlight we get at given time t
         s = 0
         if 16 > t_arg >= 0:
             s = 80 * (math.sin((2 * np.pi * (1 / 48) * t_arg - 4 / 5 * math.pi))) ** 4
@@ -290,7 +304,7 @@ class OptimisationTask:
                         opti.subject_to(xt[t][i, j] <= R.iloc[i, j])
                         opti.subject_to(xt[t][i, j] >= 0)
 
-    def create_constraint_house_consumption(self, N, num_snaps, ct=None):
+    def create_constraint_house_consumption(self, N, num_snaps):
         opti = self.task
         xt = self._x_task
         # constraint for the amount of energy each individual house consumes for N discrete times between
@@ -307,7 +321,7 @@ class OptimisationTask:
                     Pendt[t][i] += xt[t][i, j]
                     Pendt[t][i] += -xt[t][j, i]
                 Pendt[t][i] += xt[t][i, i]
-                opti.subject_to(ct[t][i] == Pendt[t][i])
+                opti.subject_to(self.buses[i].power_draw[t] == Pendt[t][i])
 
     def create_constraint_generator_production(self, N, num_snaps):
         opti = self.task
@@ -360,24 +374,6 @@ class OptimisationTask:
         num_snaps = self.num_snapshots
         snapshots = self.snapshots
 
-        # TODO: Something
-        c_max_const = [400, 350, 250, 2500]
-        c_min_const = [10, 20, 30, 40]
-
-        ct_const = []
-        for t in num_snaps:
-            ct_const.append(OptimisationTask.create_array_of_consumption(snapshots[t], c_max_const, c_min_const))
-
-        # ct_const = [[414, 360, 246, 2542.5], [276, 240, 164, 3559.5], [483, 420, 287, 10678.5],
-        #             [966, 840, 574, 10768.5],
-        #             [1035, 900, 615, 8136], [828, 720, 492, 6102], [828, 720, 492, 5058], [1104, 960, 656, 3051]]
-        ct_const = [[400, 350, 250, 2500]]
-        # ct_const = [[800, 500, 100, 700]]
-        # ct_const = [[400, 350, 250, 2500], [400, 350, 250, 2500]]
-        # ct_const = [[400, 350, 250, 2500], [800, 500, 100, 700]]
-
-        assert len(ct_const) == len(num_snaps)
-
         self.create_problem_and_variables(N_const, num_snaps)
 
         # self.create_cost_function(N_const, num_snaps, L_const)
@@ -396,7 +392,7 @@ class OptimisationTask:
         self.create_constraint_line_rating(N_const, num_snaps)
 
         # self.create_constraint_house_consumption(N_const, num_snaps, ct_const)
-        self.create_constraint_house_consumption(N_const, num_snaps, ct_const)
+        self.create_constraint_house_consumption(N_const, num_snaps)
 
         self.create_constraint_generator_production(N_const, num_snaps)
 
@@ -414,3 +410,5 @@ class OptimisationTask:
         self.solve()
 
         self.print_solution()
+
+        return self.solution, self._x_task, self._a_task

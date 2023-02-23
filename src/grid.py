@@ -108,7 +108,7 @@ class Grid:
         if self.snapshots is not None:
             raise PermissionError("Snapshots can only be set once.")
         else:
-            assert isinstance(value, np.ndarray)
+            assert isinstance(value, (np.ndarray, list))
             self._snapshots = value
 
     @property
@@ -258,7 +258,7 @@ class Grid:
         panel_output_per_sqm = self.get_panel_output_per_sqm()
 
         self.optimisation_task = src.optimisation_task.OptimisationTask(L, R, a, total_panel_size, panel_output_per_sqm,
-                                                                        self.snapshots)
+                                                                        self.snapshots, self.buses)
         self.optimisation_task.create_optimisation_task()
 
     def optimise(self):
@@ -269,12 +269,15 @@ class Grid:
 
         """
 
-        # TODO calc buildout
-        self.optimisation_task.optimise()
+        solution, xt, a = self.optimisation_task.optimise()
+
+        self.create_build_out(solution, a)
+
+        return self
 
 
 
-    def create_build_out(self):
+    def create_build_out(self, solution, a):
         """
 
 
@@ -284,4 +287,6 @@ class Grid:
         Returns:
 
         """
-        pass
+        new_panel_size = solution.value(a).round()
+        for bus in range(len(new_panel_size)):
+            self.buses[bus].panel.size = new_panel_size[bus]

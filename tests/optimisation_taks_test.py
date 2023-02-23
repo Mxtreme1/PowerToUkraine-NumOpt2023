@@ -23,15 +23,31 @@ line_2 = Line(bus4, bus5, 70, type_b)
 line_slack = Line(slack_bus, bus0, 100, type_b)
 snapshots = np.linspace(0, 24, 1)
 
+# # TODO: Something
+# c_max_const = [400, 350, 250, 2500]
+# c_min_const = [10, 20, 30, 40]
+#
+# ct_const = []
+# for t in num_snaps:
+#     ct_const.append(OptimisationTask.create_array_of_consumption(snapshots[t], c_max_const, c_min_const))
+
+# ct_const = [[414, 360, 246, 2542.5], [276, 240, 164, 3559.5], [483, 420, 287, 10678.5],
+#             [966, 840, 574, 10768.5],
+#             [1035, 900, 615, 8136], [828, 720, 492, 6102], [828, 720, 492, 5058], [1104, 960, 656, 3051]]
+# ct_const = [[400, 350, 250, 2500]]
+# ct_const = [[800, 500, 100, 700]]
+# ct_const = [[400, 350, 250, 2500], [400, 350, 250, 2500]]
+# ct_const = [[400, 350, 250, 2500], [800, 500, 100, 700]]
+
 grid = Grid([bus0, bus1, bus2, bus3, bus4, bus5, slack_bus], [line_a, line_b, line_c, line_1, line_2, line_slack],
             slack_bus, snapshots)
 
 
 def test_original_task():
-    house1 = Bus(100, None, 0)
-    house2 = Bus(150, None, 0)
-    house3 = Bus(60, None, 0)
-    bakery = Bus(150, None, 0)
+    house1 = Bus(100, [400], 0)
+    house2 = Bus(150, [350], 0)
+    house3 = Bus(60, [250], 0)
+    bakery = Bus(150, [2500], 0)
     generator = Bus(0, None, 0)
 
     type_inf = LineType("inf", 9999999999999)
@@ -49,29 +65,53 @@ def test_original_task():
                          [line1_2, line1_3, line1_g, line2_4, line2_g, line4_g],
                          generator, snaps)
     original_grid.create_optimisation_task()
-    original_grid.optimise()
+    new_grid = original_grid.optimise()
+
+
+def test_original_task_multiple_snapshots():
+    house1 = Bus(100, [400, 800], 0)
+    house2 = Bus(150, [350, 500], 0)
+    house3 = Bus(60, [250, 100], 0)
+    bakery = Bus(150, [2500, 700], 0)
+    generator = Bus(0, None, 0)
+
+    type_inf = LineType("inf", 9999999999999)
+
+    line1_2 = Line(house1, house2, 40, type_inf)
+    line1_3 = Line(house1, house3, 30, type_inf)
+    line1_g = Line(house1, generator, 10, type_inf)
+    line2_4 = Line(house2, bakery, 30, type_inf)
+    line2_g = Line(house2, generator, 30, type_inf)
+    line4_g = Line(bakery, generator, 5, type_inf)
+
+    snaps = np.linspace(0, 24, 2)
+
+    original_grid = Grid([house1, house2, house3, bakery, generator],
+                         [line1_2, line1_3, line1_g, line2_4, line2_g, line4_g],
+                         generator, snaps)
+    original_grid.create_optimisation_task()
+    new_grid = original_grid.optimise()
 
 
 def test_simple_task():
-    b0 = Bus(100, None, 0)
-    b1 = Bus(70, None, 0)
-    bs = Bus(0, None, 0)
+    b0 = Bus(100, [50], 0)
+    b1 = Bus(70, [50], 0)
+    bs = Bus(0, [50], 0)
     t_a = LineType("Cool", 100)
-    l = Line(b0, b1, 5, t_a)
+    line = Line(b0, b1, 5, t_a)
     ls = Line(bs, b0, 100, t_a)
 
-    simple_grid = Grid([b0, b1, bs], [l, ls], bs, snapshots)
+    simple_grid = Grid([b0, b1, bs], [line, ls], bs, snapshots)
     simple_grid.create_optimisation_task()
     simple_grid.optimise()
-    pass
 
 
 def test_presentation_grid():
-    house_1 = Bus(100, None, 0)
-    house_2 = Bus(150, None, 0)
-    house_3 = Bus(60, None, 0)
-    bakery = Bus(150, None, 0)
-    slack_node = Bus(0, None, 0)
+    house_1 = Bus(100, [50], 0)
+    house_2 = Bus(150, [50], 0)
+    house_3 = Bus(60, [50], 0)
+    bakery = Bus(150, [50], 0)
+    slack_node = Bus(0, [50], 0)
     line_slack_1 = Line(slack_node, house_1, 10, type_b)
     line_slack_2 = Line(slack_node, house_2, 20, type_a)
     line_slack_bakery = Line(slack_node, bakery, 5, type_b)
@@ -94,4 +134,4 @@ def test_optimisation_task_sanity():
     total_panel_size = grid.calculate_total_panel_size()
     panel_output_per_sqm = grid.get_panel_output_per_sqm()
 
-    OptimisationTask(L, R, a, total_panel_size, panel_output_per_sqm, snapshots)
+    OptimisationTask(L, R, a, total_panel_size, panel_output_per_sqm, snapshots, grid.buses)

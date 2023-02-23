@@ -1,7 +1,7 @@
 from src.panel import Panel
 
 import itertools
-import pandas
+import numpy as np
 
 
 class Bus:
@@ -62,10 +62,17 @@ class Bus:
 
     @power_draw.setter
     def power_draw(self, value):
-        assert isinstance(value, (type(None), pandas.DataFrame))
+        assert isinstance(value, (type(None), list))
 
-        if value is not None:
-            raise NotImplementedError("Check power draw validity not implemented")
+        if value is not None and self.power_draw is not None:
+            raise PermissionError("Power draw can be set only once!")
+        else:
+            assert isinstance(value, (list, type(None)))
+
+            if isinstance(value, list):
+                for item in value:
+                    assert isinstance(item, (int, float, np.int64, np.float64))
+                    assert item >= 0        # Power draw is non-negative
 
         self._power_draw = value
 
