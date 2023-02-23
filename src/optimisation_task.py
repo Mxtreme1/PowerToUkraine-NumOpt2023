@@ -9,12 +9,12 @@ class OptimisationTask:
     Handles the creation and solving of the optimisation problem.
 
     Args:
-        L (pandas.DataFrame):
+        line_length (pandas.DataFrame):
             A matrix with the length of the line going from Bus_i to Bus_j in its entry ij. It is symmetrical.
             If there is no line between them, the value is infinity,
             if the line is going from the bus to itself it is 0.
 
-        R (pandas.DataFrame):
+        line_rating (pandas.DataFrame):
             The matrix R where R_i,j is the rating of the line going from Bus_i to Bus_j if i != j.
             If i == j then it is the maximum possible electricity created on the panel of Bus_i:
             Bus_i.panel.size * output/m^2
@@ -23,7 +23,7 @@ class OptimisationTask:
             Vector A that has the roof area of Bus_i in its i-th entry.
     """
 
-    def __init__(self, L, R, a, total_panel_size, panel_output_per_sqm, snapshots):
+    def __init__(self, line_length, line_rating, a, total_panel_size, panel_output_per_sqm, snapshots):
 
         self._L = None
         self._R = None
@@ -31,25 +31,28 @@ class OptimisationTask:
         self._total_panel_size = None
         self._panel_output_per_sqm = None
         self._task = None
-        self._x = None
+        self._solution = None
+        self._x_task = None
+        self._a_task = None
         self._snapshots = None
+        self._num_snapshots = None
         # Write getters and setters
         self._xt = None
         self._a = None
 
-        self.L = L
-        self.R = R
+        self.line_length = line_length
+        self.line_rating = line_rating
         self.a = a
         self.total_panel_size = total_panel_size
         self.panel_output_per_sqm = panel_output_per_sqm
         self.snapshots = snapshots
 
     @property
-    def L(self):
+    def line_length(self):
         return self._L
 
-    @L.setter
-    def L(self, value):
+    @line_length.setter
+    def line_length(self, value):
         assert isinstance(value, pd.DataFrame)
         for row in value.index.values:
             for column in value.columns.values:
@@ -60,11 +63,11 @@ class OptimisationTask:
         self._L = value
 
     @property
-    def R(self):
+    def line_rating(self):
         return self._R
 
-    @R.setter
-    def R(self, value):
+    @line_rating.setter
+    def line_rating(self, value):
         assert isinstance(value, pd.DataFrame)
         for row in value.index.values:
             for column in value.columns.values:
@@ -140,8 +143,27 @@ class OptimisationTask:
             assert isinstance(value, np.ndarray)
             self._snapshots = value
 
+    @property
+    def solution(self):
+        return self._solution
+
+    @solution.setter
+    def solution(self, value):
+        if self.solution is not None:
+            raise PermissionError("Solution settable only once.")
+        else:
+            self._solution = value
+
+    @property
+    def num_snapshots(self):
+        if self.snapshots is None:
+            raise ValueError("Snapshots not set.")
+        else:
+            return range(len(self.snapshots))  # easy for loops
+
     # define function for energy consumption of every house, where c_max is the maximal energy house i consumes and
     # cmin is the minimal energy it consumes(at night or at day)
+
     @staticmethod
     def create_energy_consumption(c_max_arg, c_min_arg, t_arg):
         if 16 > t_arg >= 0:
@@ -155,6 +177,7 @@ class OptimisationTask:
 
     # define function that returns array of energy consumption of each individual house given time t1
     # where the input arguments are a fixed time and the lists of cmax and cmin
+
     @staticmethod
     def create_array_of_consumption(t1, argcmax, argcmin):
         consumption_at_time_t1_all_houses = []
@@ -175,120 +198,207 @@ class OptimisationTask:
 
         return s
 
-    def create_optimisation_task(self):
-        """
-        Creates the pulp variables P_ij for the lines.
-        """
-
-        L = self.L
-        R = self.R
-        roof_sizes = self.a
-        snapshots = self.snapshots
-        available_panel_size = self.total_panel_size
-        N = roof_sizes.size - 1      # Ignore slack bus for solar panels on roof
-
-        # TODO: Code this
-        c_max = [100, 80]
-        c_min = [10, 20]
-
-        K = self.panel_output_per_sqm
-        num_snaps = range(len(snapshots))  # easy for loops
-
+    def create_problem_and_variables(self, N, num_snaps):
         # create empty optimization problem
         opti = ca.Opti()
 
+        # define variable(nxn matrix)
 
         xt = []
-        for t in num_snaps:
-            xt.append(opti.variable(N + 1, N + 1, 'symmetric'))
+        for _ in num_snaps:
+            xt.append(opti.variable(N + 1, N + 1))
 
         a = opti.variable(N, 1)
 
+        self.task = opti
+        self._x_task = xt
+        self._a_task = a
 
-
+    def create_cost_function(self, N, num_snaps, L=None):
         # define objective, only sum over elements below and in main diagonal
+        opti = self.task
+        xt = self._x_task
+        a = self._a_task
+        if L is None:
+            L = self.line_length
+
         f = 0
         for t in num_snaps:
-            for i in range(N):
-                for j in range(N):
-                    if i == j:
-                        f += a[i] * 0.1
+            for i in range(N + 1):
+                for j in range(N + 1):
+                    if i == j and i < N:
+                        f += a[i] * 0.0001  # Generator does not have a roof
+                    elif i == j and i == N:
+                        f += 999999999 * (xt[t][N, N])  # Punish generator current hard
                     else:
-                        f += 1 / 2 * L.iloc[j, i] * ((xt[t][j, i]) ** 2)
-
-        big_m = 999999
-        for t in num_snaps:
-            for i in range(N):
-                f += big_m * (xt[t][i, N] * L.iloc[i, N]) ** 2
+                        # Only x[t][i, j] or x[t][j, i] should ever be nonzero due to >= 0 and cost function punishing
+                        # f += L.iloc[i, j] * xt[t][i, j]  # Punish including generator lines
+                        length = L.iloc[i, j]
+                        power_flow = xt[t][i, j]
+                        f += length * power_flow      # Punish including generator lines
 
         opti.minimize(f)
 
-
-
-        # constraint how much area of solar panels, we can distribute in total
+    def create_constraint_total_panel_size(self, N, available_panel_size=None):
+        opti = self.task
+        a = self._a_task
+        if available_panel_size is None:
+            available_panel_size = self.total_panel_size
+        # constraint for maximal panel-area we have
         area_sum = 0
         for i in range(N):
             area_sum += a[i]
 
+        # constraint how much area of solar panels, we can distribute in total
         opti.subject_to(area_sum <= available_panel_size)
 
-
-
+    def create_constraint_panel_output(self, N, num_snaps, K=None):
+        opti = self.task
+        xt = self._x_task
+        a = self._a_task
+        if K is None:
+            K = self.panel_output_per_sqm
         # constraint how energy production of house i is connected to area of solar panels
         for t in num_snaps:
             for i in range(N):
-                opti.subject_to(xt[t][i, i] == K * a[i])
+                opti.subject_to(xt[t][i, i] == K * a[i])    # TODO: add sun function
 
-
-
+    def create_constraint_house_panel_size(self, N, roof_sizes=None):
+        opti = self.task
+        a = self._a_task
+        if roof_sizes is None:
+            roof_sizes = self.a     # Different from a_task, a_task is variable, a is actual roof size
         # constraint that roof area is limited for each house i
         for bus_num in range(N):
             opti.subject_to(a[bus_num] <= roof_sizes.iloc[bus_num])
             opti.subject_to(0 <= a[bus_num])
 
-
-
+    def create_constraint_line_rating(self, N, num_snaps, R=None):
+        opti = self.task
+        xt = self._x_task
+        if R is None:
+            R = self.line_rating
         # constraint that each individual power line can only transport in one direction(positivity)
         for t in num_snaps:
             for i in range(N + 1):
                 for j in range(N + 1):
-                    if i == j:
-                        continue
+                    if [i, j] == [N, N]:
+                        continue        # The generator can take current out of the system.
+                    elif i == j:
+                        opti.subject_to(xt[t][i, j] >= 0)
                     else:
                         opti.subject_to(xt[t][i, j] <= R.iloc[i, j])
-                        opti.subject_to(xt[t][i, j] >= -R.iloc[i, j])
+                        opti.subject_to(xt[t][i, j] >= 0)
 
-
-
+    def create_constraint_house_consumption(self, N, num_snaps, ct=None):
+        opti = self.task
+        xt = self._x_task
         # constraint for the amount of energy each individual house consumes for N discrete times between
         # 0 and 24 hours
-        ct = []
-        for t in num_snaps:
-            ct.append(OptimisationTask.create_array_of_consumption(snapshots[t], c_max, c_min))
 
-        Pendt = [0] * len(snapshots)
+        Pendt = []
+        for t in num_snaps:
+            Pendt.append([])
+            for i in range(N):
+                Pendt[t].append([0])
         for t in num_snaps:
             for i in range(N):
                 for j in range(N + 1):
-                    if i <= j:
-                        Pendt[t] += xt[t][i, j]
-                    else:
-                        Pendt[t] += -xt[t][i, j]
-                opti.subject_to(ct[t][i] == Pendt[t])
+                    Pendt[t][i] += xt[t][i, j]
+                    Pendt[t][i] += -xt[t][j, i]
+                Pendt[t][i] += xt[t][i, i]
+                opti.subject_to(ct[t][i] == Pendt[t][i])
 
+    def create_constraint_generator_production(self, N, num_snaps):
+        opti = self.task
+        xt = self._x_task
         # constraint for the generator
-        # constraint for generator
-        Pendgent = [0] * len(snapshots)
+        Pendgent = [0] * len(num_snaps)
         for t in num_snaps:
             for j in range(N):
-                Pendgent[t] += xt[t][N, j]
+                # What is coming out minus what is coming in, aka production of gen should be xt[t][N, N]
+                Pendgent[t] += xt[t][j, N]
+                Pendgent[t] += -xt[t][N, j]
             opti.subject_to(xt[t][N, N] == Pendgent[t])
 
+    def solve(self):
+        opti = self.task
+        # define solver
+        opti.solver('ipopt')  # Use IPOPT as solver
 
-        self.task = opti
-        self._xt = xt
-        self._a = a
+        # solve optimization problem
+        self.solution = opti.solve()
 
+    def print_solution(self):
+        xt = self._x_task
+        a = self._a_task
+        sol = self.solution
+        num_snaps = self.num_snapshots
+
+        # read and print solution
+        xopt = []
+        for t in num_snaps:
+            xopt.append(sol.value(xt[t]))
+        aopt = sol.value(a)
+        print("#########################################")
+        for t in num_snaps:
+            print(xopt[t].round())
+            print("#########################################")
+        print(aopt.round())
+
+        # display(yopt)
+        # to see some more info
+        # print(yopt)
+        print(sol.stats)
+
+    def create_optimisation_task(self):
+        """
+        Creates the pulp variables P_ij for the lines.
+        """
+
+        N_const = self.a.size - 1       # Slack bus is a regular bus, but is not counted in N
+        num_snaps = self.num_snapshots
+        snapshots = self.snapshots
+
+        # TODO: Something
+        c_max_const = [400, 350, 250, 2500]
+        c_min_const = [10, 20, 30, 40]
+
+        ct_const = []
+        for t in num_snaps:
+            ct_const.append(OptimisationTask.create_array_of_consumption(snapshots[t], c_max_const, c_min_const))
+
+        # ct_const = [[414, 360, 246, 2542.5], [276, 240, 164, 3559.5], [483, 420, 287, 10678.5],
+        #             [966, 840, 574, 10768.5],
+        #             [1035, 900, 615, 8136], [828, 720, 492, 6102], [828, 720, 492, 5058], [1104, 960, 656, 3051]]
+        ct_const = [[400, 350, 250, 2500]]
+        # ct_const = [[800, 500, 100, 700]]
+        # ct_const = [[400, 350, 250, 2500], [400, 350, 250, 2500]]
+        # ct_const = [[400, 350, 250, 2500], [800, 500, 100, 700]]
+
+        assert len(ct_const) == len(num_snaps)
+
+        self.create_problem_and_variables(N_const, num_snaps)
+
+        # self.create_cost_function(N_const, num_snaps, L_const)
+        self.create_cost_function(N_const, num_snaps)
+
+        # self.create_constraint_total_panel_size(N_const, available_panel_size_const)
+        self.create_constraint_total_panel_size(N_const)
+
+        # self.create_constraint_panel_output(N_const, num_snaps, K_const)
+        self.create_constraint_panel_output(N_const, num_snaps)
+
+        # self.create_constraint_house_panel_size(N_const, roof_sizes_const)
+        self.create_constraint_house_panel_size(N_const)
+
+        # self.create_constraint_line_rating(N_const, num_snaps, R_const)
+        self.create_constraint_line_rating(N_const, num_snaps)
+
+        # self.create_constraint_house_consumption(N_const, num_snaps, ct_const)
+        self.create_constraint_house_consumption(N_const, num_snaps, ct_const)
+
+        self.create_constraint_generator_production(N_const, num_snaps)
 
     def optimise(self):
         """
@@ -301,25 +411,6 @@ class OptimisationTask:
             The current on each line as a matrix with directed line entries.
         """
 
-        # define solver
-        self.task.solver('ipopt')  # Use IPOPT as solver
+        self.solve()
 
-        # solve optimization problem
-        sol = self.task.solve()
-
-        # read and print solution
-        xopt = []
-        for t in range(len(self.snapshots)):
-            xopt.append(sol.value(self._xt[t]))
-        aopt = sol.value(self._a)
-
-        print("#########################################")
-        for t in range(len(self.snapshots)):
-            print(xopt[t])
-            print("#########################################")
-        print(aopt)
-
-        # display(yopt)
-        # to see some more info
-        # print(yopt)
-        print(sol.stats)
+        self.print_solution()
