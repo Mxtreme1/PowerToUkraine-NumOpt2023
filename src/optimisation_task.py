@@ -1,3 +1,4 @@
+import casadi
 import pandas as pd
 import numpy as np
 import casadi as ca
@@ -118,7 +119,8 @@ class OptimisationTask:
     @task.setter
     def task(self, value):
         if self._task is None:
-            # TODO: add type assertion
+            assert isinstance(value, casadi.Opti)
+
             self._task = value
         else:
             raise PermissionError("Task is only settable once to prevent errors.")
@@ -132,7 +134,6 @@ class OptimisationTask:
         if self.x is not None:
             raise PermissionError("Not settable")
         else:
-            # TODO: assert type
             self._x = value
 
     @property
@@ -204,7 +205,7 @@ class OptimisationTask:
         # define function for amount of sunlight we get at given time t
         s = 0
         if 16 > t_arg >= 0:
-            s = 80 * (math.sin((2 * np.pi * (1 / 48) * t_arg - 4 / 5 * math.pi))) ** 4
+            s = (math.sin((2 * np.pi * (1 / 48) * (t_arg - 8.5) - 4 / 5 * math.pi))) ** 4
         elif 16 <= t_arg:
             s = 0
         if s <= 0:
@@ -266,7 +267,7 @@ class OptimisationTask:
         # constraint how much area of solar panels, we can distribute in total
         opti.subject_to(area_sum <= available_panel_size)
 
-    def create_constraint_panel_output(self, N, num_snaps, K=None):
+    def create_constraint_panel_output(self, N, num_snaps, snapshots, K=None):
         opti = self.task
         xt = self._x_task
         a = self._a_task
@@ -275,7 +276,7 @@ class OptimisationTask:
         # constraint how energy production of house i is connected to area of solar panels
         for t in num_snaps:
             for i in range(N):
-                opti.subject_to(xt[t][i, i] == K * a[i])    # TODO: add sun function
+                opti.subject_to(xt[t][i, i] == K * max(0.01, self.sun(snapshots[t])) * a[i])
 
     def create_constraint_house_panel_size(self, N, roof_sizes=None):
         opti = self.task
@@ -383,7 +384,7 @@ class OptimisationTask:
         self.create_constraint_total_panel_size(N_const)
 
         # self.create_constraint_panel_output(N_const, num_snaps, K_const)
-        self.create_constraint_panel_output(N_const, num_snaps)
+        self.create_constraint_panel_output(N_const, num_snaps, snapshots)
 
         # self.create_constraint_house_panel_size(N_const, roof_sizes_const)
         self.create_constraint_house_panel_size(N_const)

@@ -11,9 +11,9 @@ def test_bus_sanity():
 
 def test_bus_negative_power_draw():
     with pytest.raises(AssertionError):
-        bus = Bus(70.0, [-100], 1)
+        Bus(70.0, [-100], 1)
     with pytest.raises(AssertionError):
-        bus = Bus(70.0, [100, -100], 1)
+        Bus(70.0, [100, -100], 1)
 
 def test_bus_change_roof_size():
     bus = Bus(70.0, [100], 1)

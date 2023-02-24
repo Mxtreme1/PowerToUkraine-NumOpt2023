@@ -23,24 +23,10 @@ line_2 = Line(bus4, bus5, 70, type_b)
 line_slack = Line(slack_bus, bus0, 100, type_b)
 snapshots = np.linspace(0, 24, 1)
 
-# # TODO: Something
-# c_max_const = [400, 350, 250, 2500]
-# c_min_const = [10, 20, 30, 40]
-#
-# ct_const = []
-# for t in num_snaps:
-#     ct_const.append(OptimisationTask.create_array_of_consumption(snapshots[t], c_max_const, c_min_const))
-
-# ct_const = [[414, 360, 246, 2542.5], [276, 240, 164, 3559.5], [483, 420, 287, 10678.5],
-#             [966, 840, 574, 10768.5],
-#             [1035, 900, 615, 8136], [828, 720, 492, 6102], [828, 720, 492, 5058], [1104, 960, 656, 3051]]
-# ct_const = [[400, 350, 250, 2500]]
-# ct_const = [[800, 500, 100, 700]]
-# ct_const = [[400, 350, 250, 2500], [400, 350, 250, 2500]]
-# ct_const = [[400, 350, 250, 2500], [800, 500, 100, 700]]
+total_panel_size = 800
 
 grid = Grid([bus0, bus1, bus2, bus3, bus4, bus5, slack_bus], [line_a, line_b, line_c, line_1, line_2, line_slack],
-            slack_bus, snapshots)
+            slack_bus, snapshots, total_panel_size)
 
 
 def test_original_task():
@@ -63,7 +49,7 @@ def test_original_task():
 
     original_grid = Grid([house1, house2, house3, bakery, generator],
                          [line1_2, line1_3, line1_g, line2_4, line2_g, line4_g],
-                         generator, snaps)
+                         generator, snaps, total_panel_size)
     original_grid.create_optimisation_task()
     new_grid = original_grid.optimise()
 
@@ -88,7 +74,7 @@ def test_original_task_multiple_snapshots():
 
     original_grid = Grid([house1, house2, house3, bakery, generator],
                          [line1_2, line1_3, line1_g, line2_4, line2_g, line4_g],
-                         generator, snaps)
+                         generator, snaps, total_panel_size)
     original_grid.create_optimisation_task()
     new_grid = original_grid.optimise()
 
@@ -101,7 +87,7 @@ def test_simple_task():
     line = Line(b0, b1, 5, t_a)
     ls = Line(bs, b0, 100, t_a)
 
-    simple_grid = Grid([b0, b1, bs], [line, ls], bs, snapshots)
+    simple_grid = Grid([b0, b1, bs], [line, ls], bs, snapshots, total_panel_size)
     simple_grid.create_optimisation_task()
     simple_grid.optimise()
 
@@ -119,19 +105,8 @@ def test_presentation_grid():
     line_1_2 = Line(house_1, house_2, 30, type_a)
     line_2_bakery = Line(house_2, bakery, 30, type_a)
     presentation_grid = Grid([house_1, house_2, house_3, bakery, slack_node], [line_slack_1, line_slack_2,
-                             line_slack_bakery, line_1_2, line_1_3, line_2_bakery], slack_node, snapshots)
+                             line_slack_bakery, line_1_2, line_1_3, line_2_bakery], slack_node, snapshots,
+                             total_panel_size)
 
     presentation_grid.create_optimisation_task()
     presentation_grid.optimise()
-
-
-def test_optimisation_task_sanity():
-    L = grid.create_length_matrix()
-    R = grid.create_line_rating_matrix()
-    a = grid.create_area_vector()
-    # TODO replace with power flow
-    c = None
-    total_panel_size = grid.calculate_total_panel_size()
-    panel_output_per_sqm = grid.get_panel_output_per_sqm()
-
-    OptimisationTask(L, R, a, total_panel_size, panel_output_per_sqm, snapshots, grid.buses)

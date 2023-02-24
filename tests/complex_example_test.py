@@ -33,43 +33,45 @@ def test_complex_network():
     buses = [bus1, bus2, bus3, bus4, bus5, bus6, bus7, bus8, bus9, bus10, bus11, bus12, bus13, bus14, bus15, bus16,
              bus17, bus18, bus19, bus20, generator]
 
-    type_inf = LineType("inf", 9999999999999)
+    type_a = LineType("TypeA", 20000)
+    type_b = LineType("TypeB", 10000)
 
-    line1_2 = Line(bus1, bus2, 30, type_inf)
-    line1_5 = Line(bus1, bus5, 30, type_inf)
-    line1_8 = Line(bus1, bus8, 30, type_inf)
-    line1_g = Line(bus1, generator, 10, type_inf)
-    line2_3 = Line(bus2, bus3, 15, type_inf)
-    line2_g = Line(bus2, generator, 15, type_inf)
-    line3_4 = Line(bus3, bus4, 10, type_inf)
-    line3_g = Line(bus3, generator, 20, type_inf)
-    line4_6 = Line(bus4, bus6, 10, type_inf)
-    line4_g = Line(bus4, generator, 20, type_inf)
-    line5_6 = Line(bus5, bus6, 20, type_inf)
-    line5_7 = Line(bus5, bus7, 10, type_inf)
-    line5_g = Line(bus5, generator, 10, type_inf)
-    line6_11 = Line(bus6, bus11, 50, type_inf)
-    line7_8 = Line(bus7, bus8, 10, type_inf)
-    line8_9 = Line(bus8, bus9, 40, type_inf)
-    line9_10 = Line(bus9, bus10, 300, type_inf)
-    line11_12 = Line(bus11, bus12, 20, type_inf)
-    line11_13 = Line(bus11, bus13, 10, type_inf)
-    line12_14 = Line(bus12, bus14, 20, type_inf)
-    line13_15 = Line(bus13, bus15, 30, type_inf)
-    line14_17 = Line(bus14, bus17, 30, type_inf)
-    line15_18 = Line(bus15, bus18, 50, type_inf)
-    line16_17 = Line(bus16, bus17, 20, type_inf)
-    line17_19 = Line(bus17, bus19, 20, type_inf)
-    line18_20 = Line(bus18, bus20, 20, type_inf)
-    line19_20 = Line(bus19, bus20, 30, type_inf)
+    line1_2 = Line(bus1, bus2, 30, type_a)
+    line1_5 = Line(bus1, bus5, 30, type_a)
+    line1_8 = Line(bus1, bus8, 30, type_a)
+    line1_g = Line(bus1, generator, 10, type_a)
+    line2_3 = Line(bus2, bus3, 15, type_a)
+    line2_g = Line(bus2, generator, 15, type_a)
+    line3_4 = Line(bus3, bus4, 10, type_a)
+    line3_g = Line(bus3, generator, 20, type_a)
+    line4_6 = Line(bus4, bus6, 10, type_a)
+    line4_g = Line(bus4, generator, 20, type_a)
+    line5_6 = Line(bus5, bus6, 20, type_a)
+    line5_7 = Line(bus5, bus7, 10, type_a)
+    line5_g = Line(bus5, generator, 10, type_a)
+    line6_11 = Line(bus6, bus11, 50, type_a)
+    line7_8 = Line(bus7, bus8, 10, type_a)
+    line8_9 = Line(bus8, bus9, 40, type_a)
+    line9_10 = Line(bus9, bus10, 300, type_b)
+    line11_12 = Line(bus11, bus12, 20, type_a)
+    line11_13 = Line(bus11, bus13, 10, type_a)
+    line12_14 = Line(bus12, bus14, 20, type_a)
+    line13_15 = Line(bus13, bus15, 30, type_a)
+    line14_17 = Line(bus14, bus17, 30, type_a)
+    line15_18 = Line(bus15, bus18, 50, type_b)
+    line16_17 = Line(bus16, bus17, 20, type_b)
+    line17_19 = Line(bus17, bus19, 20, type_b)
+    line18_20 = Line(bus18, bus20, 20, type_b)
+    line19_20 = Line(bus19, bus20, 30, type_b)
 
     lines = [line1_2, line1_5, line1_8, line1_g, line2_3, line2_g, line3_4, line3_g, line4_6, line4_g, line5_6,
              line5_7, line5_g, line6_11, line7_8, line8_9, line9_10, line11_12, line11_13, line12_14, line13_15,
              line14_17, line15_18, line16_17, line17_19, line18_20, line19_20]
 
-    snapshots = [3.5, 9.5, 15.5, 21]
+    snapshots = [3.5, 9.5, 15.5, 21]        # 3:30 am, 9:30 am 3:30 pm, 9 pm
+    total_panel_size = 210                  # Available square meters of panels
 
-    grid = Grid(buses, lines, generator, snapshots)
+    grid = Grid(buses, lines, generator, snapshots, total_panel_size)
 
     grid.create_optimisation_task()
     grid.optimise()

@@ -24,7 +24,7 @@ class Grid:
 
     id_counter = itertools.count()
 
-    def __init__(self, buses=None, lines=None, slack_bus=None, snapshots=None):
+    def __init__(self, buses=None, lines=None, slack_bus=None, snapshots=None, total_panel_size=None):
         self._id = next(Grid.id_counter)
 
         self._buses = None
@@ -34,11 +34,13 @@ class Grid:
         self._panels = None
         self._paths = None
         self._optimisation_task = None
+        self._total_panel_size = None
 
         self.buses = buses
         self.lines = lines
         self.snapshots = snapshots
         self.slack_bus = slack_bus
+        self._total_panel_size = total_panel_size
 
     @property
     def id(self):
@@ -136,8 +138,6 @@ class Grid:
         else:
             raise PermissionError("Optimisation task is only settable once to prevent errors.")
 
-
-
     # TODO: Next two methods can be simplified.
     def create_line_rating_matrix(self):
         """
@@ -217,23 +217,6 @@ class Grid:
 
         return a
 
-    def calculate_total_panel_size(self):
-        """
-        Sum over all roof sizes.
-
-        Returns:
-            (int, float):
-                Sum over all roof sizes.
-
-        """
-
-        total_size = 0
-
-        for bus in self.buses:
-            total_size += bus.roof_size
-
-        return total_size
-
     def get_panel_output_per_sqm(self):
         """
         Output of any solar panel per square meter.
@@ -254,7 +237,7 @@ class Grid:
         L = self.create_length_matrix()
         R = self.create_line_rating_matrix()
         a = self.create_area_vector()
-        total_panel_size = self.calculate_total_panel_size()
+        total_panel_size = self._total_panel_size
         panel_output_per_sqm = self.get_panel_output_per_sqm()
 
         self.optimisation_task = src.optimisation_task.OptimisationTask(L, R, a, total_panel_size, panel_output_per_sqm,
