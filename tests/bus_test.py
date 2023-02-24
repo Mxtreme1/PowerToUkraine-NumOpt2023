@@ -9,11 +9,13 @@ def test_bus_sanity():
     assert bus.power_draw == [100]
     assert bus.panel.size == 1
 
+
 def test_bus_negative_power_draw():
     with pytest.raises(AssertionError):
         Bus(70.0, [-100], 1)
     with pytest.raises(AssertionError):
         Bus(70.0, [100, -100], 1)
+
 
 def test_bus_change_roof_size():
     bus = Bus(70.0, [100], 1)
@@ -28,6 +30,7 @@ def test_bus_change_id():
     bus = Bus(70.0, [100], 1)
     with pytest.raises(PermissionError):
         bus.id = 100
+
 
 def test_bus_change_power_draw():
     bus = Bus(70.0, [100], 1)

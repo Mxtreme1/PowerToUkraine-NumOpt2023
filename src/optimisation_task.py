@@ -180,8 +180,18 @@ class OptimisationTask:
 
     @staticmethod
     def create_energy_consumption(c_max_arg, c_min_arg, t_arg):
-        # define function for energy consumption of every house, where c_max is the maximal energy house i consumes and
-        # cmin is the minimal energy it consumes(at night or at day)
+        """
+        Define function for energy consumption of every house, where c_max is the maximal energy house i consumes and
+        cmin is the minimal energy it consumes(at night or at day)
+
+        Args:
+            c_max_arg:
+            c_min_arg:
+            t_arg:
+
+        Returns:
+
+        """
         if 16 > t_arg >= 0:
             c_func = c_max_arg * (math.sin(2 * math.pi * (1 / 16) * t_arg)) ** 2 + c_min_arg
         elif 16 <= t_arg <= 24:
@@ -193,8 +203,18 @@ class OptimisationTask:
 
     @staticmethod
     def create_array_of_consumption(t1, argcmax, argcmin):
-        # define function that returns array of energy consumption of each individual house given time t1
-        # where the input arguments are a fixed time and the lists of cmax and cmin
+        """
+        Define function that returns array of energy consumption of each individual house given time t1
+        where the input arguments are a fixed time and the lists of cmax and cmin
+
+        Args:
+            t1:
+            argcmax:
+            argcmin:
+
+        Returns:
+
+        """
         consumption_at_time_t1_all_houses = []
         for argc_max, argc_min_ in zip(argcmax, argcmin):
             consumption_at_time_t1_all_houses.append(OptimisationTask.create_energy_consumption(argc_max, argc_min_, t1))
@@ -202,7 +222,15 @@ class OptimisationTask:
 
     @staticmethod
     def sun(t_arg):
-        # define function for amount of sunlight we get at given time t
+        """
+        Define function for amount of sunlight we get at given time t
+
+        Args:
+            t_arg:
+
+        Returns:
+
+        """
         s = 0
         if 16 > t_arg >= 0:
             s = (math.sin((2 * np.pi * (1 / 48) * (t_arg - 8.5) - 4 / 5 * math.pi))) ** 4
@@ -214,6 +242,17 @@ class OptimisationTask:
         return s
 
     def create_problem_and_variables(self, N, num_snaps):
+        """
+        Initialises the optimisation problem and its variables.
+        Args:
+            N (int):
+                The number of buildings/buses, excluding the generator/slack node.
+
+            num_snaps (int):
+                Number of snapshots.
+
+        """
+
         # create empty optimization problem
         opti = ca.Opti()
 
@@ -230,6 +269,21 @@ class OptimisationTask:
         self._a_task = a
 
     def create_cost_function(self, N, num_snaps, L=None):
+        """
+        Adds the cost function to the optimisation problem.
+
+        Args:
+            N (int):
+                The number of buildings/buses, excluding the generator/slack node.
+
+            num_snaps (int):
+                Number of snapshots.
+
+            L (pandas.DataFrame):
+                The length of power lines from each house to another, 0 for house to itself and very high value for
+                nonexistent lines.
+
+        """
         # define objective, only sum over elements below and in main diagonal
         opti = self.task
         xt = self._x_task

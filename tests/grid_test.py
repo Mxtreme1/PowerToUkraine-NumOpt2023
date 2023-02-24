@@ -25,15 +25,18 @@ snapshots = np.linspace(0, 24, 2)
 grid = Grid([bus0, bus1, bus2, bus3, bus4, bus5, slack_bus], [line_a, line_b, line_c, line_1, line_2, line_slack],
             slack_bus, snapshots, 99999)
 
+
 def test_sanity_grid():
     assert set(grid.buses) == {bus0, bus1, bus2, bus3, bus4, bus5, slack_bus}
     assert set(grid.lines) == {line_a, line_b, line_c, line_1, line_2, line_slack}
     assert grid.slack_bus == slack_bus
 
+
 def test_rating_matrix():
     grid.create_line_rating_matrix()
     grid.create_length_matrix()
     grid.create_area_vector()
+
 
 def test_bus_left_out():
     grid2 = Grid([bus0, bus1, bus2, bus4, bus5, slack_bus], [line_a, line_b, line_1, line_2, line_slack], slack_bus,
