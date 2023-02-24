@@ -35,7 +35,7 @@ def test_original_task():
     bakery = Bus(150, [2500], 0)
     generator = Bus(0, None, 0)
 
-    type_c = LineType("inf", 20000)
+    type_c = LineType("TypeC", 20000)
 
     line1_2 = Line(house1, house2, 40, type_c)
     line1_3 = Line(house1, house3, 30, type_c)
@@ -44,7 +44,7 @@ def test_original_task():
     line2_g = Line(house2, generator, 30, type_c)
     line4_g = Line(bakery, generator, 5, type_c)
 
-    snaps = np.linspace(0, 24, 1)
+    snaps = [15.7]
 
     original_grid = Grid([house1, house2, house3, bakery, generator],
                          [line1_2, line1_3, line1_g, line2_4, line2_g, line4_g],
@@ -60,7 +60,7 @@ def test_original_task_multiple_snapshots():
     bakery = Bus(150, [2500, 700], 0)
     generator = Bus(0, None, 0)
 
-    type_d = LineType("inf", 20000)
+    type_d = LineType("TypeD", 999920000)
 
     line1_2 = Line(house1, house2, 40, type_d)
     line1_3 = Line(house1, house3, 30, type_d)
@@ -69,11 +69,11 @@ def test_original_task_multiple_snapshots():
     line2_g = Line(house2, generator, 30, type_d)
     line4_g = Line(bakery, generator, 5, type_d)
 
-    snaps = np.linspace(0, 24, 2)
+    snaps = [15.7, 15.7]
 
     original_grid = Grid([house1, house2, house3, bakery, generator],
                          [line1_2, line1_3, line1_g, line2_4, line2_g, line4_g],
-                         generator, snaps, total_panel_size)
+                         generator, snaps, 18)
     original_grid.create_optimisation_task()
     new_grid = original_grid.optimise()
 

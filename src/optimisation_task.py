@@ -329,7 +329,7 @@ class OptimisationTask:
         # constraint how energy production of house i is connected to area of solar panels
         for t in num_snaps:
             for i in range(n):
-                opti.subject_to(xt[t][i, i] == maximum_output_per_sqm * max(0.01, self.sun(snapshots[t])) * a[i])
+                opti.subject_to(xt[t][i, i] == maximum_output_per_sqm * self.sun(snapshots[t]) * a[i])
 
     def create_constraint_house_panel_size(self, n, roof_sizes=None):
         opti = self.task
@@ -410,9 +410,9 @@ class OptimisationTask:
         aopt = sol.value(a)
         print("#########################################")
         for t in num_snaps:
-            print(xopt[t].round())
+            print(xopt[t].round(decimals=2))
             print("#########################################")
-        print(aopt.round())
+        print(aopt.round(decimals=2))
 
         # display(yopt)
         # to see some more info
