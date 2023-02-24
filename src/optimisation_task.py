@@ -127,14 +127,12 @@ class OptimisationTask:
 
     @property
     def x(self):
-        return self._x
+        return self._xt
 
     @x.setter
     def x(self, value):
         if self.x is not None:
             raise PermissionError("Not settable")
-        else:
-            self._x = value
 
     @property
     def snapshots(self):
@@ -217,7 +215,8 @@ class OptimisationTask:
         """
         consumption_at_time_t1_all_houses = []
         for argc_max, argc_min_ in zip(argcmax, argcmin):
-            consumption_at_time_t1_all_houses.append(OptimisationTask.create_energy_consumption(argc_max, argc_min_, t1))
+            consumption_at_time_t1_all_houses.append(
+                OptimisationTask.create_energy_consumption(argc_max, argc_min_, t1))
         return consumption_at_time_t1_all_houses
 
     @staticmethod
@@ -241,14 +240,14 @@ class OptimisationTask:
 
         return s
 
-    def create_problem_and_variables(self, N, num_snaps):
+    def create_problem_and_variables(self, n, num_snaps):
         """
         Initialises the optimisation problem and its variables.
         Args:
-            N (int):
+            n (int):
                 The number of buildings/buses, excluding the generator/slack node.
 
-            num_snaps (int):
+            num_snaps (range):
                 Number of snapshots.
 
         """
@@ -260,26 +259,26 @@ class OptimisationTask:
 
         xt = []
         for _ in num_snaps:
-            xt.append(opti.variable(N + 1, N + 1))
+            xt.append(opti.variable(n + 1, n + 1))
 
-        a = opti.variable(N, 1)
+        a = opti.variable(n, 1)
 
         self.task = opti
         self._x_task = xt
         self._a_task = a
 
-    def create_cost_function(self, N, num_snaps, L=None):
+    def create_cost_function(self, n, num_snaps, line_ratings=None):
         """
         Adds the cost function to the optimisation problem.
 
         Args:
-            N (int):
+            n (int):
                 The number of buildings/buses, excluding the generator/slack node.
 
-            num_snaps (int):
+            num_snaps (range):
                 Number of snapshots.
 
-            L (pandas.DataFrame):
+            line_ratings (pandas.DataFrame):
                 The length of power lines from each house to another, 0 for house to itself and very high value for
                 nonexistent lines.
 
@@ -288,107 +287,107 @@ class OptimisationTask:
         opti = self.task
         xt = self._x_task
         a = self._a_task
-        if L is None:
-            L = self.line_length
+        if line_ratings is None:
+            line_ratings = self.line_length
 
         f = 0
         for t in num_snaps:
-            for i in range(N + 1):
-                for j in range(N + 1):
-                    if i == j and i < N:
+            for i in range(n + 1):
+                for j in range(n + 1):
+                    if i == j and i < n:
                         f += a[i] * 0.0001  # Generator does not have a roof
-                    elif i == j and i == N:
-                        f += 999999999 * (xt[t][N, N])  # Punish generator current hard
+                    elif i == j and i == n:
+                        f += 999999999 * (xt[t][n, n])  # Punish generator current hard
                     else:
                         # Only x[t][i, j] or x[t][j, i] should ever be nonzero due to >= 0 and cost function punishing
                         # f += L.iloc[i, j] * xt[t][i, j]  # Punish including generator lines
-                        length = L.iloc[i, j]
+                        length = line_ratings.iloc[i, j]
                         power_flow = xt[t][i, j]
                         f += length * power_flow      # Punish including generator lines
 
         opti.minimize(f)
 
-    def create_constraint_total_panel_size(self, N, available_panel_size=None):
+    def create_constraint_total_panel_size(self, n, available_panel_size=None):
         opti = self.task
         a = self._a_task
         if available_panel_size is None:
             available_panel_size = self.total_panel_size
         # constraint for maximal panel-area we have
         area_sum = 0
-        for i in range(N):
+        for i in range(n):
             area_sum += a[i]
 
         # constraint how much area of solar panels, we can distribute in total
         opti.subject_to(area_sum <= available_panel_size)
 
-    def create_constraint_panel_output(self, N, num_snaps, snapshots, K=None):
+    def create_constraint_panel_output(self, n, num_snaps, snapshots, maximum_output_per_sqm=None):
         opti = self.task
         xt = self._x_task
         a = self._a_task
-        if K is None:
-            K = self.panel_output_per_sqm
+        if maximum_output_per_sqm is None:
+            maximum_output_per_sqm = self.panel_output_per_sqm
         # constraint how energy production of house i is connected to area of solar panels
         for t in num_snaps:
-            for i in range(N):
-                opti.subject_to(xt[t][i, i] == K * max(0.01, self.sun(snapshots[t])) * a[i])
+            for i in range(n):
+                opti.subject_to(xt[t][i, i] == maximum_output_per_sqm * max(0.01, self.sun(snapshots[t])) * a[i])
 
-    def create_constraint_house_panel_size(self, N, roof_sizes=None):
+    def create_constraint_house_panel_size(self, n, roof_sizes=None):
         opti = self.task
         a = self._a_task
         if roof_sizes is None:
             roof_sizes = self.a     # Different from a_task, a_task is variable, a is actual roof size
         # constraint that roof area is limited for each house i
-        for bus_num in range(N):
+        for bus_num in range(n):
             opti.subject_to(a[bus_num] <= roof_sizes.iloc[bus_num])
             opti.subject_to(0 <= a[bus_num])
 
-    def create_constraint_line_rating(self, N, num_snaps, R=None):
+    def create_constraint_line_rating(self, n, num_snaps, line_ratings=None):
         opti = self.task
         xt = self._x_task
-        if R is None:
-            R = self.line_rating
+        if line_ratings is None:
+            line_ratings = self.line_rating
         # constraint that each individual power line can only transport in one direction(positivity)
         for t in num_snaps:
-            for i in range(N + 1):
-                for j in range(N + 1):
-                    if [i, j] == [N, N]:
+            for i in range(n + 1):
+                for j in range(n + 1):
+                    if [i, j] == [n, n]:
                         continue        # The generator can take current out of the system.
                     elif i == j:
                         opti.subject_to(xt[t][i, j] >= 0)
                     else:
-                        opti.subject_to(xt[t][i, j] <= R.iloc[i, j])
+                        opti.subject_to(xt[t][i, j] <= line_ratings.iloc[i, j])
                         opti.subject_to(xt[t][i, j] >= 0)
 
-    def create_constraint_house_consumption(self, N, num_snaps):
+    def create_constraint_house_consumption(self, n, num_snaps):
         opti = self.task
         xt = self._x_task
         # constraint for the amount of energy each individual house consumes for N discrete times between
         # 0 and 24 hours
 
-        Pendt = []
+        current_ending = []
         for t in num_snaps:
-            Pendt.append([])
-            for i in range(N):
-                Pendt[t].append([0])
+            current_ending.append([])
+            for i in range(n):
+                current_ending[t].append([0])
         for t in num_snaps:
-            for i in range(N):
-                for j in range(N + 1):
-                    Pendt[t][i] += xt[t][i, j]
-                    Pendt[t][i] += -xt[t][j, i]
-                Pendt[t][i] += xt[t][i, i]
-                opti.subject_to(self.buses[i].power_draw[t] == Pendt[t][i])
+            for i in range(n):
+                for j in range(n + 1):
+                    current_ending[t][i] += xt[t][i, j]
+                    current_ending[t][i] += -xt[t][j, i]
+                current_ending[t][i] += xt[t][i, i]
+                opti.subject_to(self.buses[i].power_draw[t] == current_ending[t][i])
 
-    def create_constraint_generator_production(self, N, num_snaps):
+    def create_constraint_generator_production(self, n, num_snaps):
         opti = self.task
         xt = self._x_task
         # constraint for the generator
-        Pendgent = [0] * len(num_snaps)
+        current_ending_gen = [0] * len(num_snaps)
         for t in num_snaps:
-            for j in range(N):
+            for j in range(n):
                 # What is coming out minus what is coming in, aka production of gen should be xt[t][N, N]
-                Pendgent[t] += xt[t][j, N]
-                Pendgent[t] += -xt[t][N, j]
-            opti.subject_to(xt[t][N, N] == Pendgent[t])
+                current_ending_gen[t] += xt[t][j, n]
+                current_ending_gen[t] += -xt[t][n, j]
+            opti.subject_to(xt[t][n, n] == current_ending_gen[t])
 
     def solve(self):
         opti = self.task
@@ -425,31 +424,31 @@ class OptimisationTask:
         Creates the pulp variables P_ij for the lines.
         """
 
-        N_const = self.a.size - 1       # Slack bus is a regular bus, but is not counted in N
+        n_const = self.a.size - 1       # Slack bus is a regular bus, but is not counted in n
         num_snaps = self.num_snapshots
         snapshots = self.snapshots
 
-        self.create_problem_and_variables(N_const, num_snaps)
+        self.create_problem_and_variables(n_const, num_snaps)
 
-        # self.create_cost_function(N_const, num_snaps, L_const)
-        self.create_cost_function(N_const, num_snaps)
+        # self.create_cost_function(n_const, num_snaps, L_const)
+        self.create_cost_function(n_const, num_snaps)
 
-        # self.create_constraint_total_panel_size(N_const, available_panel_size_const)
-        self.create_constraint_total_panel_size(N_const)
+        # self.create_constraint_total_panel_size(n_const, available_panel_size_const)
+        self.create_constraint_total_panel_size(n_const)
 
-        # self.create_constraint_panel_output(N_const, num_snaps, K_const)
-        self.create_constraint_panel_output(N_const, num_snaps, snapshots)
+        # self.create_constraint_panel_output(n_const, num_snaps, K_const)
+        self.create_constraint_panel_output(n_const, num_snaps, snapshots)
 
-        # self.create_constraint_house_panel_size(N_const, roof_sizes_const)
-        self.create_constraint_house_panel_size(N_const)
+        # self.create_constraint_house_panel_size(n_const, roof_sizes_const)
+        self.create_constraint_house_panel_size(n_const)
 
-        # self.create_constraint_line_rating(N_const, num_snaps, R_const)
-        self.create_constraint_line_rating(N_const, num_snaps)
+        # self.create_constraint_line_rating(n_const, num_snaps, R_const)
+        self.create_constraint_line_rating(n_const, num_snaps)
 
-        # self.create_constraint_house_consumption(N_const, num_snaps, ct_const)
-        self.create_constraint_house_consumption(N_const, num_snaps)
+        # self.create_constraint_house_consumption(n_const, num_snaps, ct_const)
+        self.create_constraint_house_consumption(n_const, num_snaps)
 
-        self.create_constraint_generator_production(N_const, num_snaps)
+        self.create_constraint_generator_production(n_const, num_snaps)
 
     def optimise(self):
         """

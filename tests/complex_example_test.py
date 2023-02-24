@@ -2,9 +2,6 @@ from src.bus import Bus
 from src.line import Line
 from src.line_type import LineType
 from src.grid import Grid
-from src.optimisation_task import OptimisationTask
-
-import numpy as np
 
 
 def test_complex_network():

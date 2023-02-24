@@ -6,6 +6,7 @@ import src.bus
 import src.line
 import src.optimisation_task
 
+
 class Grid:
     """
     A complete low voltage power grid.
@@ -125,7 +126,6 @@ class Grid:
             assert isinstance(value, src.bus.Bus)
             self._slack_bus = value
 
-
     @property
     def optimisation_task(self):
         return self._optimisation_task
@@ -151,8 +151,8 @@ class Grid:
 
         """
 
-        R = pd.DataFrame(index=[bus.id for bus in self.buses], columns=[bus.id for bus in self.buses])
-        R = R.fillna(0)
+        line_ratings = pd.DataFrame(index=[bus.id for bus in self.buses], columns=[bus.id for bus in self.buses])
+        line_ratings = line_ratings.fillna(0)
 
         for line in self.lines:
             bus0 = line.bus0.id
@@ -160,16 +160,15 @@ class Grid:
             rating = line.line_type.rating
             
             assert isinstance(rating, (int, float))
-            
-            
-            R.loc[bus0, bus1] = rating
-            R.loc[bus1, bus0] = rating
+
+            line_ratings.loc[bus0, bus1] = rating
+            line_ratings.loc[bus1, bus0] = rating
 
         for bus in self.buses:
             i = bus.id
-            R.loc[i, i] = bus.roof_size * bus.panel.output_per_sqm
+            line_ratings.loc[i, i] = bus.roof_size * bus.panel.output_per_sqm
 
-        return R
+        return line_ratings
 
     def create_length_matrix(self):
         """
@@ -182,8 +181,8 @@ class Grid:
 
         """
 
-        L = pd.DataFrame(index=[bus.id for bus in self.buses], columns=[bus.id for bus in self.buses])
-        L = L.fillna(99999999999)
+        line_length = pd.DataFrame(index=[bus.id for bus in self.buses], columns=[bus.id for bus in self.buses])
+        line_length = line_length.fillna(99999999999)
 
         for line in self.lines:
             bus0 = line.bus0.id
@@ -192,14 +191,14 @@ class Grid:
 
             assert isinstance(length, (int, float))
 
-            L.loc[bus0, bus1] = length
-            L.loc[bus1, bus0] = length
+            line_length.loc[bus0, bus1] = length
+            line_length.loc[bus1, bus0] = length
 
         for bus in self.buses:
             i = bus.id
-            L.loc[i, i] = 0
+            line_length.loc[i, i] = 0
 
-        return L
+        return line_length
 
     def create_area_vector(self):
         """
@@ -234,14 +233,15 @@ class Grid:
         Creates the problem to be optimised .
         """
 
-        L = self.create_length_matrix()
-        R = self.create_line_rating_matrix()
+        line_lengths = self.create_length_matrix()
+        line_ratings = self.create_line_rating_matrix()
         a = self.create_area_vector()
         total_panel_size = self._total_panel_size
         panel_output_per_sqm = self.get_panel_output_per_sqm()
 
-        self.optimisation_task = src.optimisation_task.OptimisationTask(L, R, a, total_panel_size, panel_output_per_sqm,
-                                                                        self.snapshots, self.buses)
+        self.optimisation_task = src.optimisation_task.OptimisationTask(line_lengths, line_ratings, a, total_panel_size,
+                                                                        panel_output_per_sqm, self.snapshots,
+                                                                        self.buses)
         self.optimisation_task.create_optimisation_task()
 
     def optimise(self):
@@ -257,8 +257,6 @@ class Grid:
         self.create_build_out(solution, a)
 
         return self
-
-
 
     def create_build_out(self, solution, a):
         """
