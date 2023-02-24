@@ -4,7 +4,16 @@ from src.line_type import LineType
 from src.grid import Grid
 
 if __name__ == '__main__':
-
+    """
+    
+    This is the large neighbourhood example, other examples can be found in the test files:
+    - optimisation_task_test.py
+    - complex_example_test.py
+    They can be run as unittests, their results should be printed to console.
+    
+    """
+    
+    # Create buses, each one represents a building or part of one
     bus1 = Bus(105, [470, 1510, 1250, 1660], 0)
     bus2 = Bus(100, [1950, 5460, 4800, 3000], 0)
     bus3 = Bus(50, [1200, 3360, 2960, 1850], 0)

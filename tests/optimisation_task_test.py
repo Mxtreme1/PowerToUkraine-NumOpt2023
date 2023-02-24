@@ -35,14 +35,14 @@ def test_original_task():
     bakery = Bus(150, [2500], 0)
     generator = Bus(0, None, 0)
 
-    type_inf = LineType("inf", 9999999999999)
+    type_c = LineType("inf", 20000)
 
-    line1_2 = Line(house1, house2, 40, type_inf)
-    line1_3 = Line(house1, house3, 30, type_inf)
-    line1_g = Line(house1, generator, 10, type_inf)
-    line2_4 = Line(house2, bakery, 30, type_inf)
-    line2_g = Line(house2, generator, 30, type_inf)
-    line4_g = Line(bakery, generator, 5, type_inf)
+    line1_2 = Line(house1, house2, 40, type_c)
+    line1_3 = Line(house1, house3, 30, type_c)
+    line1_g = Line(house1, generator, 10, type_c)
+    line2_4 = Line(house2, bakery, 30, type_c)
+    line2_g = Line(house2, generator, 30, type_c)
+    line4_g = Line(bakery, generator, 5, type_c)
 
     snaps = np.linspace(0, 24, 1)
 
@@ -60,14 +60,14 @@ def test_original_task_multiple_snapshots():
     bakery = Bus(150, [2500, 700], 0)
     generator = Bus(0, None, 0)
 
-    type_inf = LineType("inf", 9999999999999)
+    type_d = LineType("inf", 20000)
 
-    line1_2 = Line(house1, house2, 40, type_inf)
-    line1_3 = Line(house1, house3, 30, type_inf)
-    line1_g = Line(house1, generator, 10, type_inf)
-    line2_4 = Line(house2, bakery, 30, type_inf)
-    line2_g = Line(house2, generator, 30, type_inf)
-    line4_g = Line(bakery, generator, 5, type_inf)
+    line1_2 = Line(house1, house2, 40, type_d)
+    line1_3 = Line(house1, house3, 30, type_d)
+    line1_g = Line(house1, generator, 10, type_d)
+    line2_4 = Line(house2, bakery, 30, type_d)
+    line2_g = Line(house2, generator, 30, type_d)
+    line4_g = Line(bakery, generator, 5, type_d)
 
     snaps = np.linspace(0, 24, 2)
 
