@@ -4,7 +4,7 @@ import numpy as np
 
 import src.bus
 import src.line
-import src.path
+import src.optimisation_task
 
 
 class Grid:
@@ -25,18 +25,23 @@ class Grid:
 
     id_counter = itertools.count()
 
-    def __init__(self, buses=None, lines=None, snapshots=None):
+    def __init__(self, buses=None, lines=None, slack_bus=None, snapshots=None, total_panel_size=None):
         self._id = next(Grid.id_counter)
 
         self._buses = None
         self._lines = None
         self._snapshots = None
+        self._slack_bus = None
         self._panels = None
         self._paths = None
+        self._optimisation_task = None
+        self._total_panel_size = None
 
         self.buses = buses
         self.lines = lines
         self.snapshots = snapshots
+        self.slack_bus = slack_bus
+        self._total_panel_size = total_panel_size
 
     @property
     def id(self):
@@ -98,31 +103,40 @@ class Grid:
         raise NotImplementedError("Set for each bus individually for now.")
     
     @property
-    def paths(self):
-        return self._paths
-    
-    @paths.setter
-    def paths(self, value):
-        if self._paths is not None:
-            raise PermissionError("Paths are calculated automatically when buses and lines are added.")
-
-        assert isinstance(value, list)
-
-        unique_paths = []
-        for path in value:
-            assert isinstance(path, src.path.Path)
-            assert path not in unique_paths
-            unique_paths.append(path)
-
-        self._paths = value
-
-    @property
     def snapshots(self):
         return self._snapshots
     
     @snapshots.setter
     def snapshots(self, value):
-        pass
+        if self.snapshots is not None:
+            raise PermissionError("Snapshots can only be set once.")
+        else:
+            assert isinstance(value, (np.ndarray, list))
+            self._snapshots = value
+
+    @property
+    def slack_bus(self):
+        return self._slack_bus
+
+    @slack_bus.setter
+    def slack_bus(self, value):
+        if self.slack_bus is not None:
+            raise PermissionError("Slack bus can be set only once!")
+        else:
+            assert isinstance(value, src.bus.Bus)
+            self._slack_bus = value
+
+    @property
+    def optimisation_task(self):
+        return self._optimisation_task
+
+    @optimisation_task.setter
+    def optimisation_task(self, value):
+        if self.optimisation_task is None:
+            assert isinstance(value, src.optimisation_task.OptimisationTask)
+            self._optimisation_task = value
+        else:
+            raise PermissionError("Optimisation task is only settable once to prevent errors.")
 
     # TODO: Next two methods can be simplified.
     def create_line_rating_matrix(self):
@@ -137,8 +151,8 @@ class Grid:
 
         """
 
-        R = pd.DataFrame(index=[bus.id for bus in self.buses], columns=[bus.id for bus in self.buses])
-        R = R.fillna(0)
+        line_ratings = pd.DataFrame(index=[bus.id for bus in self.buses], columns=[bus.id for bus in self.buses])
+        line_ratings = line_ratings.fillna(0)
 
         for line in self.lines:
             bus0 = line.bus0.id
@@ -146,16 +160,15 @@ class Grid:
             rating = line.line_type.rating
             
             assert isinstance(rating, (int, float))
-            
-            
-            R.loc[bus0, bus1] = rating
-            R.loc[bus1, bus0] = rating
+
+            line_ratings.loc[bus0, bus1] = rating
+            line_ratings.loc[bus1, bus0] = rating
 
         for bus in self.buses:
             i = bus.id
-            R.loc[i, i] = bus.panel.size * bus.panel.output_per_sqm
+            line_ratings.loc[i, i] = bus.roof_size * bus.panel.output_per_sqm
 
-        return R
+        return line_ratings
 
     def create_length_matrix(self):
         """
@@ -168,8 +181,8 @@ class Grid:
 
         """
 
-        L = pd.DataFrame(index=[bus.id for bus in self.buses], columns=[bus.id for bus in self.buses])
-        L = L.fillna(np.inf)
+        line_length = pd.DataFrame(index=[bus.id for bus in self.buses], columns=[bus.id for bus in self.buses])
+        line_length = line_length.fillna(99999999999)
 
         for line in self.lines:
             bus0 = line.bus0.id
@@ -178,14 +191,14 @@ class Grid:
 
             assert isinstance(length, (int, float))
 
-            L.loc[bus0, bus1] = length
-            L.loc[bus1, bus0] = length
+            line_length.loc[bus0, bus1] = length
+            line_length.loc[bus1, bus0] = length
 
         for bus in self.buses:
             i = bus.id
-            L.loc[i, i] = 0
+            line_length.loc[i, i] = 0
 
-        return L
+        return line_length
 
     def create_area_vector(self):
         """
@@ -203,8 +216,49 @@ class Grid:
 
         return a
 
+    def get_panel_output_per_sqm(self):
+        """
+        Output of any solar panel per square meter.
 
-    def create_build_out(self):
+        Returns:
+            (int, float):
+                Output of any solar panel per square meter.
+
+        """
+
+        return self.buses[0].panel.output_per_sqm       # All panels currently have the same output per sqm.
+
+    def create_optimisation_task(self):
+        """
+        Creates the problem to be optimised .
+        """
+
+        line_lengths = self.create_length_matrix()
+        line_ratings = self.create_line_rating_matrix()
+        a = self.create_area_vector()
+        total_panel_size = self._total_panel_size
+        panel_output_per_sqm = self.get_panel_output_per_sqm()
+
+        self.optimisation_task = src.optimisation_task.OptimisationTask(line_lengths, line_ratings, a, total_panel_size,
+                                                                        panel_output_per_sqm, self.snapshots,
+                                                                        self.buses)
+        self.optimisation_task.create_optimisation_task()
+
+    def optimise(self):
+        """
+        Executes the optimisation task.
+
+        Returns:
+
+        """
+
+        solution, xt, a = self.optimisation_task.optimise()
+
+        self.create_build_out(solution, a)
+
+        return self
+
+    def create_build_out(self, solution, a):
         """
 
 
@@ -214,4 +268,6 @@ class Grid:
         Returns:
 
         """
-        pass
+        new_panel_size = solution.value(a).round()
+        for bus in range(len(new_panel_size)):
+            self.buses[bus].panel.size = new_panel_size[bus]

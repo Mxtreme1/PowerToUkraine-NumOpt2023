@@ -51,8 +51,4 @@ class LineType:
             assert isinstance(value, (int, float))
             assert value >= 0
 
-            # TODO: check validity
-
-            self._rating = value
-
         self._rating = value

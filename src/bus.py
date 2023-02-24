@@ -1,7 +1,7 @@
 from src.panel import Panel
 
 import itertools
-import pandas
+import numpy as np
 
 
 class Bus:
@@ -18,13 +18,13 @@ class Bus:
             Need to be same time frames aka snapshots as in Line efficiency DataFrame.
 
         panel_size (int, float):
-            The size of the solar panel on a roof, can be zero. Also defaults to 0.
+            The size of the solar panel on a roof at time t=0, can be zero.
+            At this point not used for optimisation! Also defaults to 0.
     """
 
     id_counter = itertools.count()
 
     def __init__(self, roof_size, power_draw, panel_size=0):
-
         self._id = next(Bus.id_counter)  # Unique identifier
 
         self._roof_size = None
@@ -62,10 +62,17 @@ class Bus:
 
     @power_draw.setter
     def power_draw(self, value):
-        assert isinstance(value, (type(None), pandas.DataFrame))
+        assert isinstance(value, (type(None), list))
 
-        if value is not None:
-            raise NotImplementedError("Check power draw validity not implemented")
+        if value is not None and self.power_draw is not None:
+            raise PermissionError("Power draw can be set only once!")
+        else:
+            assert isinstance(value, (list, type(None)))
+
+            if isinstance(value, list):
+                for item in value:
+                    assert isinstance(item, (int, float, np.int64, np.float64))
+                    assert item >= 0        # Power draw is non-negative
 
         self._power_draw = value
 

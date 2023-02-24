@@ -3,8 +3,8 @@ from src.line import Line
 from src.line_type import LineType
 from src.grid import Grid
 
-if __name__ == '__main__':
 
+def test_complex_network():
     bus1 = Bus(105, [470, 1510, 1250, 1660], 0)
     bus2 = Bus(100, [1950, 5460, 4800, 3000], 0)
     bus3 = Bus(50, [1200, 3360, 2960, 1850], 0)
@@ -65,8 +65,8 @@ if __name__ == '__main__':
              line5_7, line5_g, line6_11, line7_8, line8_9, line9_10, line11_12, line11_13, line12_14, line13_15,
              line14_17, line15_18, line16_17, line17_19, line18_20, line19_20]
 
-    snapshots = [3.5, 9.5, 15.5, 21]  # 3:30 am, 9:30 am 3:30 pm, 9 pm
-    total_panel_size = 210  # Available square meters of panels
+    snapshots = [3.5, 9.5, 15.5, 21]        # 3:30 am, 9:30 am 3:30 pm, 9 pm
+    total_panel_size = 210                  # Available square meters of panels
 
     grid = Grid(buses, lines, generator, snapshots, total_panel_size)
 
